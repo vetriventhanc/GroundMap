@@ -1,28 +1,24 @@
 
 from fastapi import FastAPI
-from datetime import datetime, timezone
+
+from app.core.config import settings
+from app.api.routes.health import router as health_router
+
 
 app = FastAPI(
-    title="GroundMap API",
+    title=settings.app_name,
     description="Offline-first Spatial Intelligence Platform",
-    version="0.1.0"
+    version="0.2.0"
 )
+
+app.include_router(health_router)
 
 
 @app.get("/")
 def root():
     return {
-        "application": "GroundMap",
-        "message": "Spatial Intelligence Platform API",
-        "version": "0.1.0",
+        "application": settings.app_name,
+        "description": "Spatial Intelligence Platform API",
+        "version": "0.2.0",
         "status": "running"
-    }
-
-
-@app.get("/health")
-def health():
-    return {
-        "status": "healthy",
-        "application": "GroundMap",
-        "timestamp": datetime.now(timezone.utc).isoformat()
     }
