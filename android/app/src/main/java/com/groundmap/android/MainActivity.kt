@@ -1,6 +1,9 @@
 
 package com.groundmap.android
 
+import com.groundmap.android.ui.assets.AssetDetailsScreen
+import com.groundmap.android.ui.assets.AssetEditScreen
+import com.groundmap.android.ui.assets.AssetEditFormData
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -64,6 +67,8 @@ fun GroundMapApp() {
     var workspaceLoading by remember { mutableStateOf(false) }
     var assetLoading by remember { mutableStateOf(false) }
     var registrationSaving by remember { mutableStateOf(false) }
+    var editSaving by remember { mutableStateOf(false) }
+    var editError by remember { mutableStateOf<String?>(null) }
 
     var workspaceError by remember { mutableStateOf<String?>(null) }
     var assetError by remember { mutableStateOf<String?>(null) }
@@ -195,6 +200,42 @@ fun GroundMapApp() {
         }.start()
     }
 
+    fun updateAsset(form: AssetEditFormData) {
+        val assetId = selectedAsset?.id ?: return
+
+        editSaving = true
+        editError = null
+
+        Thread {
+            try {
+                val updatedAsset = GroundMapApi.updateAsset(
+                    assetId = assetId,
+                    name = form.name,
+                    category = form.category,
+                    manufacturer = form.manufacturer,
+                    modelNumber = form.modelNumber,
+                    serialNumber = form.serialNumber,
+                    purchaseDate = form.purchaseDate,
+                    notes = form.notes
+                )
+
+                Handler(Looper.getMainLooper()).post {
+                    selectedAsset = updatedAsset
+                    editSaving = false
+                    editError = null
+                    assetRefresh++
+                    selectedTab = 6
+                }
+
+            } catch (e: Exception) {
+                Handler(Looper.getMainLooper()).post {
+                    editSaving = false
+                    editError = e.message ?: "Unable to update asset."
+                }
+            }
+        }.start()
+    }
+
     MaterialTheme(
         colorScheme = darkColorScheme(
             primary = Accent,
@@ -283,84 +324,13 @@ fun GroundMapApp() {
                         error = assetError,
                         onAssetSelected = {
                             selectedAsset = it
+                            selectedTab = 6
                         },
                         onRefresh = {
                             assetRefresh++
                         },
                         modifier = Modifier.padding(padding)
                     )
-
-                    if (selectedAsset != null) {
-                        AlertDialog(
-                            onDismissRequest = {
-                                selectedAsset = null
-                            },
-                            containerColor = CardColor,
-                            title = {
-                                Text(
-                                    selectedAsset!!.name,
-                                    color = White
-                                )
-                            },
-                            text = {
-                                Column(
-                                    verticalArrangement =
-                                        Arrangement.spacedBy(8.dp)
-                                ) {
-                                    DetailLine(
-                                        "Asset code",
-                                        selectedAsset!!.assetCode
-                                    )
-                                    DetailLine(
-                                        "Category",
-                                        selectedAsset!!.category
-                                    )
-                                    DetailLine(
-                                        "Manufacturer",
-                                        selectedAsset!!.manufacturer
-                                            ?: "Not specified"
-                                    )
-                                    DetailLine(
-                                        "Model",
-                                        selectedAsset!!.modelNumber
-                                            ?: "Not specified"
-                                    )
-                                    DetailLine(
-                                        "Serial number",
-                                        selectedAsset!!.serialNumber
-                                            ?: "Not specified"
-                                    )
-                                    DetailLine(
-                                        "Status",
-                                        selectedAsset!!.status
-                                    )
-                                    DetailLine(
-                                        "Condition",
-                                        selectedAsset!!.condition
-                                    )
-                                    DetailLine(
-                                        "Purchase date",
-                                        selectedAsset!!.purchaseDate
-                                            ?: "Not specified"
-                                    )
-                                    DetailLine(
-                                        "Notes",
-                                        selectedAsset!!.notes
-                                            ?: "No notes"
-                                    )
-                                }
-                            },
-                            confirmButton = {
-                                TextButton(
-                                    onClick = {
-                                        selectedAsset = null
-                                    }
-                                ) {
-                                    Text("Close")
-                                }
-                            }
-                        )
-                    }
                 }
 
                 // QR SCANNER PLACEHOLDER
@@ -412,6 +382,60 @@ fun GroundMapApp() {
                     },
                     modifier = Modifier.padding(padding)
                 )
+
+                // ASSET DETAILS
+                6 -> {
+                    val asset = selectedAsset
+
+                    if (asset != null) {
+                        AssetDetailsScreen(
+                            asset = asset,
+                            onBack = {
+                                selectedTab = 1
+                            },
+                            onEdit = {
+                                editError = null
+                                selectedTab = 7
+                            },
+                            modifier = Modifier.padding(padding)
+                        )
+                    } else {
+                        SimpleScreen(
+                            title = "Asset not selected",
+                            description = "Select an asset from the registry.",
+                            symbol = "!",
+                            modifier = Modifier.padding(padding)
+                        )
+                    }
+                }
+
+                // EDIT ASSET
+                7 -> {
+                    val asset = selectedAsset
+
+                    if (asset != null) {
+                        AssetEditScreen(
+                            asset = asset,
+                            saving = editSaving,
+                            error = editError,
+                            onSave = { form ->
+                                updateAsset(form)
+                            },
+                            onBack = {
+                                editError = null
+                                selectedTab = 6
+                            },
+                            modifier = Modifier.padding(padding)
+                        )
+                    } else {
+                        SimpleScreen(
+                            title = "Asset not selected",
+                            description = "Return to the asset registry.",
+                            symbol = "!",
+                            modifier = Modifier.padding(padding)
+                        )
+                    }
+                }
             }
         }
     }
