@@ -7,10 +7,17 @@ from app.models.location import (
     Room
 )
 
+from app.models.asset import (
+    Asset,
+    AssetEvent
+)
+
 __all__ = [
     "Workspace",
     "Site",
     "Building",
     "Floor",
-    "Room"
+    "Room",
+    "Asset",
+    "AssetEvent"
 ]
