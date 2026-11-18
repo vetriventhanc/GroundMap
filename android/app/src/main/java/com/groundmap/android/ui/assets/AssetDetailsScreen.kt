@@ -29,6 +29,7 @@ fun AssetDetailsScreen(
     asset: AssetData,
     onBack: () -> Unit,
     onEdit: () -> Unit,
+    onViewHistory: () -> Unit,
     onUpdateStatus: (String) -> Unit,
     onUpdateCondition: (String) -> Unit,
     statusSaving: Boolean,
@@ -271,6 +272,19 @@ fun AssetDetailsScreen(
 
         DetailCardSection("Additional Information") {
             DetailValue("Notes", asset.notes)
+        }
+
+        OutlinedButton(
+            onClick = onViewHistory,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = DetailAccent
+            )
+        ) {
+            Text("View Asset History")
         }
 
         Button(

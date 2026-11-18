@@ -37,6 +37,16 @@ data class AssetData(
     val notes: String?
 )
 
+data class AssetHistoryData(
+    val id: String,
+    val assetId: String,
+    val eventType: String,
+    val description: String,
+    val oldValue: JSONObject?,
+    val newValue: JSONObject?,
+    val createdAt: String
+)
+
 object GroundMapApi {
 
     private const val BASE_URL = "http://10.0.2.2:8000"
@@ -293,6 +303,36 @@ object GroundMapApi {
                 )
             )
         )
+    }
+
+    // ASSET HISTORY
+
+    fun loadAssetHistory(assetId: String): List<AssetHistoryData> {
+        val response = JSONArray(
+            request("/api/v1/assets/$assetId/history")
+        )
+
+        return buildList {
+            for (i in 0 until response.length()) {
+                val item = response.getJSONObject(i)
+
+                add(
+                    AssetHistoryData(
+                        id = item.getString("id"),
+                        assetId = item.getString("asset_id"),
+                        eventType = item.getString("event_type"),
+                        description = item.getString("description"),
+                        oldValue = if (
+                            item.isNull("old_value")
+                        ) null else item.getJSONObject("old_value"),
+                        newValue = if (
+                            item.isNull("new_value")
+                        ) null else item.getJSONObject("new_value"),
+                        createdAt = item.getString("created_at")
+                    )
+                )
+            }
+        }
     }
 
     // DASHBOARD

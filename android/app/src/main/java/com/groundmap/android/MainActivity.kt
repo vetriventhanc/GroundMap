@@ -25,6 +25,7 @@ import com.groundmap.android.data.remote.*
 import com.groundmap.android.ui.assets.AssetRegistrationScreen
 import com.groundmap.android.ui.assets.AssetRegistryScreen
 import com.groundmap.android.ui.assets.AssetFormData
+import com.groundmap.android.ui.assets.AssetHistoryScreen
 import com.groundmap.android.ui.workspace.WorkspaceSelectorScreen
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -82,6 +83,14 @@ fun GroundMapApp() {
 
     var statusError by remember { mutableStateOf<String?>(null) }
     var conditionError by remember { mutableStateOf<String?>(null) }
+
+    var assetHistory by remember {
+        mutableStateOf<List<AssetHistoryData>>(emptyList())
+    }
+
+    var historyLoading by remember { mutableStateOf(false) }
+    var historyError by remember { mutableStateOf<String?>(null) }
+    var historyRefresh by remember { mutableIntStateOf(0) }
 
     var selectedAsset by remember {
         mutableStateOf<AssetData?>(null)
@@ -296,6 +305,36 @@ fun GroundMapApp() {
         }.start()
     }
 
+    fun loadAssetHistory() {
+        val assetId = selectedAsset?.id ?: return
+
+        historyLoading = true
+        historyError = null
+
+        Thread {
+            try {
+                val result = GroundMapApi.loadAssetHistory(assetId)
+
+                Handler(Looper.getMainLooper()).post {
+                    assetHistory = result
+                    historyLoading = false
+                    historyError = null
+                }
+            } catch (e: Exception) {
+                Handler(Looper.getMainLooper()).post {
+                    historyLoading = false
+                    historyError = e.message ?: "Unable to load asset history."
+                }
+            }
+        }.start()
+    }
+
+    LaunchedEffect(selectedTab, selectedAsset?.id, historyRefresh) {
+        if (selectedTab == 8 && selectedAsset != null) {
+            loadAssetHistory()
+        }
+    }
+
     MaterialTheme(
         colorScheme = darkColorScheme(
             primary = Accent,
@@ -457,6 +496,11 @@ fun GroundMapApp() {
                                 editError = null
                                 selectedTab = 7
                             },
+                            onViewHistory = {
+                                assetHistory = emptyList()
+                                historyError = null
+                                selectedTab = 8
+                            },
                             onUpdateStatus = { status ->
                                 updateAssetStatus(status)
                             },
@@ -494,6 +538,35 @@ fun GroundMapApp() {
                             onBack = {
                                 editError = null
                                 selectedTab = 6
+                            },
+                            modifier = Modifier.padding(padding)
+                        )
+                    } else {
+                        SimpleScreen(
+                            title = "Asset not selected",
+                            description = "Return to the asset registry.",
+                            symbol = "!",
+                            modifier = Modifier.padding(padding)
+                        )
+                    }
+                }
+
+                // ASSET HISTORY
+                8 -> {
+                    val asset = selectedAsset
+
+                    if (asset != null) {
+                        AssetHistoryScreen(
+                            assetName = asset.name,
+                            assetCode = asset.assetCode,
+                            history = assetHistory,
+                            loading = historyLoading,
+                            error = historyError,
+                            onBack = {
+                                selectedTab = 6
+                            },
+                            onRefresh = {
+                                historyRefresh++
                             },
                             modifier = Modifier.padding(padding)
                         )
