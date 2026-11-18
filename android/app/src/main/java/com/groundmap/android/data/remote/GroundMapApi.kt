@@ -55,10 +55,7 @@ object GroundMapApi {
             connection.connectTimeout = 15000
             connection.readTimeout = 15000
 
-            connection.setRequestProperty(
-                "Accept",
-                "application/json"
-            )
+            connection.setRequestProperty("Accept", "application/json")
 
             if (body != null) {
                 connection.doOutput = true
@@ -95,9 +92,7 @@ object GroundMapApi {
         }
     }
 
-    private fun JSONObject.optionalString(
-        key: String
-    ): String? {
+    private fun JSONObject.optionalString(key: String): String? {
         return if (isNull(key)) null else optString(key).takeIf {
             it.isNotBlank()
         }
@@ -164,11 +159,9 @@ object GroundMapApi {
     // SINGLE ASSET
 
     fun loadAsset(assetId: String): AssetData {
-        val item = JSONObject(
-            request("/api/v1/assets/$assetId")
+        return parseAsset(
+            JSONObject(request("/api/v1/assets/$assetId"))
         )
-
-        return parseAsset(item)
     }
 
     // REGISTER ASSET
@@ -203,16 +196,14 @@ object GroundMapApi {
             put("notes", nullableJsonValue(notes))
         }
 
-        val response = request(
-            path = "/api/v1/assets",
-            method = "POST",
-            body = body
+        return parseAsset(
+            JSONObject(
+                request("/api/v1/assets", "POST", body)
+            )
         )
-
-        return parseAsset(JSONObject(response))
     }
 
-    // UPDATE ASSET
+    // UPDATE ASSET INFORMATION
 
     fun updateAsset(
         assetId: String,
@@ -235,13 +226,73 @@ object GroundMapApi {
             put("notes", nullableJsonValue(notes))
         }
 
-        val response = request(
-            path = "/api/v1/assets/$assetId",
-            method = "PATCH",
-            body = body
+        return parseAsset(
+            JSONObject(
+                request("/api/v1/assets/$assetId", "PATCH", body)
+            )
         )
+    }
 
-        return parseAsset(JSONObject(response))
+    // UPDATE ASSET STATUS
+
+    fun updateAssetStatus(
+        assetId: String,
+        status: String
+    ): AssetData {
+
+        require(
+            status in listOf("active", "maintenance", "inactive", "retired")
+        ) {
+            "Invalid asset status: $status"
+        }
+
+        val body = JSONObject().apply {
+            put("status", status)
+        }
+
+        return parseAsset(
+            JSONObject(
+                request(
+                    "/api/v1/assets/$assetId/status",
+                    "PATCH",
+                    body
+                )
+            )
+        )
+    }
+
+    // UPDATE ASSET CONDITION
+
+    fun updateAssetCondition(
+        assetId: String,
+        condition: String
+    ): AssetData {
+
+        require(
+            condition in listOf(
+                "excellent",
+                "good",
+                "fair",
+                "poor",
+                "damaged"
+            )
+        ) {
+            "Invalid asset condition: $condition"
+        }
+
+        val body = JSONObject().apply {
+            put("condition", condition)
+        }
+
+        return parseAsset(
+            JSONObject(
+                request(
+                    "/api/v1/assets/$assetId/condition",
+                    "PATCH",
+                    body
+                )
+            )
+        )
     }
 
     // DASHBOARD

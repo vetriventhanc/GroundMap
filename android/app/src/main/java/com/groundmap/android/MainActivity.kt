@@ -77,6 +77,12 @@ fun GroundMapApp() {
     var workspaceRefresh by remember { mutableIntStateOf(0) }
     var assetRefresh by remember { mutableIntStateOf(0) }
 
+    var statusSaving by remember { mutableStateOf(false) }
+    var conditionSaving by remember { mutableStateOf(false) }
+
+    var statusError by remember { mutableStateOf<String?>(null) }
+    var conditionError by remember { mutableStateOf<String?>(null) }
+
     var selectedAsset by remember {
         mutableStateOf<AssetData?>(null)
     }
@@ -231,6 +237,60 @@ fun GroundMapApp() {
                 Handler(Looper.getMainLooper()).post {
                     editSaving = false
                     editError = e.message ?: "Unable to update asset."
+                }
+            }
+        }.start()
+    }
+
+    fun updateAssetStatus(status: String) {
+        val assetId = selectedAsset?.id ?: return
+
+        statusSaving = true
+        statusError = null
+
+        Thread {
+            try {
+                val updatedAsset = GroundMapApi.updateAssetStatus(
+                    assetId = assetId,
+                    status = status
+                )
+
+                Handler(Looper.getMainLooper()).post {
+                    selectedAsset = updatedAsset
+                    statusSaving = false
+                    assetRefresh++
+                }
+            } catch (e: Exception) {
+                Handler(Looper.getMainLooper()).post {
+                    statusSaving = false
+                    statusError = e.message ?: "Unable to update status."
+                }
+            }
+        }.start()
+    }
+
+    fun updateAssetCondition(condition: String) {
+        val assetId = selectedAsset?.id ?: return
+
+        conditionSaving = true
+        conditionError = null
+
+        Thread {
+            try {
+                val updatedAsset = GroundMapApi.updateAssetCondition(
+                    assetId = assetId,
+                    condition = condition
+                )
+
+                Handler(Looper.getMainLooper()).post {
+                    selectedAsset = updatedAsset
+                    conditionSaving = false
+                    assetRefresh++
+                }
+            } catch (e: Exception) {
+                Handler(Looper.getMainLooper()).post {
+                    conditionSaving = false
+                    conditionError = e.message ?: "Unable to update condition."
                 }
             }
         }.start()
@@ -397,6 +457,16 @@ fun GroundMapApp() {
                                 editError = null
                                 selectedTab = 7
                             },
+                            onUpdateStatus = { status ->
+                                updateAssetStatus(status)
+                            },
+                            onUpdateCondition = { condition ->
+                                updateAssetCondition(condition)
+                            },
+                            statusSaving = statusSaving,
+                            conditionSaving = conditionSaving,
+                            statusError = statusError,
+                            conditionError = conditionError,
                             modifier = Modifier.padding(padding)
                         )
                     } else {
