@@ -335,6 +335,46 @@ object GroundMapApi {
         }
     }
 
+
+    // ASSET QR CODE
+
+    fun loadAssetQr(assetId: String): ByteArray {
+        val connection = URL(
+            "$BASE_URL/api/v1/assets/$assetId/qr"
+        ).openConnection() as HttpURLConnection
+
+        try {
+            connection.requestMethod = "GET"
+            connection.connectTimeout = 15000
+            connection.readTimeout = 15000
+            connection.setRequestProperty("Accept", "image/png")
+
+            val responseCode = connection.responseCode
+
+            if (responseCode !in 200..299) {
+                val errorMessage = connection.errorStream
+                    ?.bufferedReader()
+                    ?.use { it.readText() }
+                    ?: "Unable to retrieve QR code."
+
+                throw Exception("API error $responseCode: $errorMessage")
+            }
+
+            val contentType = connection.contentType ?: ""
+
+            if (!contentType.contains("image/png", ignoreCase = true)) {
+                throw Exception("Unexpected QR response type: $contentType")
+            }
+
+            return connection.inputStream.use {
+                it.readBytes()
+            }
+        } finally {
+            connection.disconnect()
+        }
+    }
+
+
     // DASHBOARD
 
     fun loadDashboard(): DashboardData {

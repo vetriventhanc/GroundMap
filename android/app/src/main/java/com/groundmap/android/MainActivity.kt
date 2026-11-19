@@ -92,6 +92,14 @@ fun GroundMapApp() {
     var historyError by remember { mutableStateOf<String?>(null) }
     var historyRefresh by remember { mutableIntStateOf(0) }
 
+    var assetQrImage by remember {
+        mutableStateOf<ByteArray?>(null)
+    }
+
+    var qrLoading by remember { mutableStateOf(false) }
+    var qrError by remember { mutableStateOf<String?>(null) }
+    var qrRefresh by remember { mutableIntStateOf(0) }
+
     var selectedAsset by remember {
         mutableStateOf<AssetData?>(null)
     }
@@ -329,9 +337,41 @@ fun GroundMapApp() {
         }.start()
     }
 
+    fun loadAssetQr() {
+        val assetId = selectedAsset?.id ?: return
+
+        qrLoading = true
+        qrError = null
+
+        Thread {
+            try {
+                val result = GroundMapApi.loadAssetQr(assetId)
+
+                Handler(Looper.getMainLooper()).post {
+                    assetQrImage = result
+                    qrLoading = false
+                    qrError = null
+                }
+            } catch (e: Exception) {
+                Handler(Looper.getMainLooper()).post {
+                    assetQrImage = null
+                    qrLoading = false
+                    qrError = e.message ?: "Unable to load QR code."
+                }
+            }
+        }.start()
+    }
+
     LaunchedEffect(selectedTab, selectedAsset?.id, historyRefresh) {
         if (selectedTab == 8 && selectedAsset != null) {
             loadAssetHistory()
+        }
+    }
+
+    LaunchedEffect(selectedTab, selectedAsset?.id, qrRefresh) {
+        if (selectedTab == 6 && selectedAsset != null) {
+            assetQrImage = null
+            loadAssetQr()
         }
     }
 
@@ -507,11 +547,19 @@ fun GroundMapApp() {
                             onUpdateCondition = { condition ->
                                 updateAssetCondition(condition)
                             },
+                            qrImageBytes = assetQrImage,
+                            qrLoading = qrLoading,
+                            qrError = qrError,
+                            onRefreshQr = {
+                                qrRefresh++
+                            },
                             statusSaving = statusSaving,
                             conditionSaving = conditionSaving,
                             statusError = statusError,
                             conditionError = conditionError,
                             modifier = Modifier.padding(padding)
+
+
                         )
                     } else {
                         SimpleScreen(

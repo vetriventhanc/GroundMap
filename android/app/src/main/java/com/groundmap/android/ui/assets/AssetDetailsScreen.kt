@@ -14,6 +14,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.groundmap.android.data.remote.AssetData
+import android.graphics.BitmapFactory
+import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.asImageBitmap
 
 private val DetailBackground = Color(0xFF0B1120)
 private val DetailCard = Color(0xFF151F32)
@@ -36,6 +39,10 @@ fun AssetDetailsScreen(
     conditionSaving: Boolean,
     statusError: String?,
     conditionError: String?,
+    qrImageBytes: ByteArray?,
+    qrLoading: Boolean,
+    qrError: String?,
+    onRefreshQr: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var selectedStatus by remember(asset.id, asset.status) {
@@ -63,6 +70,16 @@ fun AssetDetailsScreen(
         "poor",
         "damaged"
     )
+
+    val qrBitmap = remember(qrImageBytes) {
+        qrImageBytes?.let { bytes ->
+            BitmapFactory.decodeByteArray(
+                bytes,
+                0,
+                bytes.size
+            )?.asImageBitmap()
+        }
+    }
 
     Column(
         modifier = modifier
@@ -95,6 +112,99 @@ fun AssetDetailsScreen(
             color = DetailMuted,
             fontSize = 14.sp
         )
+
+        // ASSET QR CODE
+
+        DetailCardSection("Asset QR Code") {
+
+            Text(
+                "Scan this code to identify this asset.",
+                color = DetailMuted,
+                fontSize = 12.sp
+            )
+
+            when {
+                qrLoading -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(190.dp),
+                        contentAlignment = androidx.compose.ui.Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            color = DetailAccent
+                        )
+                    }
+                }
+
+                qrError != null -> {
+                    Text(
+                        qrError,
+                        color = DetailRed,
+                        fontSize = 12.sp
+                    )
+
+                    OutlinedButton(
+                        onClick = onRefreshQr,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Retry QR Code")
+                    }
+                }
+
+                qrBitmap != null -> {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = androidx.compose.ui.Alignment.Center
+                    ) {
+                        Card(
+                            colors = CardDefaults.cardColors(
+                                containerColor = Color.White
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Image(
+                                bitmap = qrBitmap,
+                                contentDescription = "QR code for ${asset.assetCode}",
+                                modifier = Modifier
+                                    .size(220.dp)
+                                    .padding(10.dp)
+                            )
+                        }
+                    }
+
+                    Text(
+                        asset.assetCode,
+                        color = DetailWhite,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    OutlinedButton(
+                        onClick = onRefreshQr,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Refresh QR Code")
+                    }
+                }
+
+                else -> {
+                    Text(
+                        "QR image is unavailable.",
+                        color = DetailMuted,
+                        fontSize = 12.sp
+                    )
+
+                    OutlinedButton(
+                        onClick = onRefreshQr,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Load QR Code")
+                    }
+                }
+            }
+        }
 
         // STATUS MANAGEMENT
 
