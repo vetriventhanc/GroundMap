@@ -1,6 +1,7 @@
 
 package com.groundmap.android
 
+import com.groundmap.android.ui.assets.AssetOperationsScreen
 import com.groundmap.android.ui.assets.AssetDetailsScreen
 import com.groundmap.android.ui.assets.AssetEditScreen
 import com.groundmap.android.ui.assets.AssetEditFormData
@@ -53,6 +54,10 @@ class MainActivity : ComponentActivity() {
 fun GroundMapApp() {
 
     var selectedTab by remember { mutableIntStateOf(0) }
+
+    var previousOperationsTab by remember {
+        mutableIntStateOf(2)
+    }
 
     var workspaces by remember {
         mutableStateOf<List<WorkspaceData>>(emptyList())
@@ -477,7 +482,8 @@ fun GroundMapApp() {
                 2 -> QrScannerScreen(
                     onAssetFound = { asset ->
                         selectedAsset = asset
-                        selectedTab = 6
+                        previousOperationsTab = 2
+                        selectedTab = 9
                     },
                     modifier = Modifier.padding(padding)
                 )
@@ -624,6 +630,45 @@ fun GroundMapApp() {
                         SimpleScreen(
                             title = "Asset not selected",
                             description = "Return to the asset registry.",
+                            symbol = "!",
+                            modifier = Modifier.padding(padding)
+                        )
+                    }
+                }
+
+                // ASSET OPERATIONS
+                9 -> {
+                    val asset = selectedAsset
+
+                    if (asset != null) {
+                        AssetOperationsScreen(
+                            asset = asset,
+                            onBack = {
+                                selectedTab = previousOperationsTab
+                            },
+                            onViewDetails = {
+                                selectedTab = 6
+                            },
+                            onUpdateStatus = {
+                                selectedTab = 6
+                            },
+                            onUpdateCondition = {
+                                selectedTab = 6
+                            },
+                            onReportFault = {
+                                // Fault reporting will be implemented in Phase 4.8.3.
+                            },
+                            onViewHistory = {
+                                assetHistory = emptyList()
+                                historyError = null
+                                selectedTab = 8
+                            },
+                            modifier = Modifier.padding(padding)
+                        )
+                    } else {
+                        SimpleScreen(
+                            title = "Asset not selected",
+                            description = "Scan an asset QR code first.",
                             symbol = "!",
                             modifier = Modifier.padding(padding)
                         )
