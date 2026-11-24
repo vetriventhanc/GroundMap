@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.groundmap.android.ui.scanner.QrScannerScreen
 import com.groundmap.android.data.remote.*
 import com.groundmap.android.ui.assets.AssetRegistrationScreen
 import com.groundmap.android.ui.assets.AssetRegistryScreen
@@ -472,12 +473,13 @@ fun GroundMapApp() {
                     )
                 }
 
-                // QR SCANNER PLACEHOLDER
-                2 -> SimpleScreen(
-                    "QR Scanner",
-                    "Camera-based QR scanning is coming next.",
-                    "▣",
-                    Modifier.padding(padding)
+                // QR SCANNER
+                2 -> QrScannerScreen(
+                    onAssetFound = { asset ->
+                        selectedAsset = asset
+                        selectedTab = 6
+                    },
+                    modifier = Modifier.padding(padding)
                 )
 
                 // ACTIVITY PLACEHOLDER
