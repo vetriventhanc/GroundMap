@@ -47,6 +47,19 @@ data class AssetHistoryData(
     val createdAt: String
 )
 
+
+data class FaultReportData(
+    val id: String,
+    val assetId: String,
+    val title: String,
+    val description: String,
+    val severity: String,
+    val status: String,
+    val createdAt: String,
+    val updatedAt: String
+)
+
+
 object GroundMapApi {
 
     private const val BASE_URL = "http://10.0.2.2:8000"
@@ -334,6 +347,68 @@ object GroundMapApi {
             }
         }
     }
+
+
+    // FAULT REPORTING
+
+    fun createFaultReport(
+        assetId: String,
+        title: String,
+        description: String,
+        severity: String
+    ): FaultReportData {
+
+        require(severity in listOf("low", "medium", "high", "critical")) {
+            "Invalid fault severity: $severity"
+        }
+
+        val body = JSONObject().apply {
+            put("title", title.trim())
+            put("description", description.trim())
+            put("severity", severity)
+        }
+
+        val response = JSONObject(
+            request(
+                "/api/v1/assets/$assetId/fault-reports",
+                "POST",
+                body
+            )
+        )
+
+        return parseFaultReport(response)
+    }
+
+    fun loadFaultReports(
+        assetId: String
+    ): List<FaultReportData> {
+
+        val response = JSONArray(
+            request("/api/v1/assets/$assetId/fault-reports")
+        )
+
+        return buildList {
+            for (i in 0 until response.length()) {
+                add(parseFaultReport(response.getJSONObject(i)))
+            }
+        }
+    }
+
+    private fun parseFaultReport(
+        item: JSONObject
+    ): FaultReportData {
+        return FaultReportData(
+            id = item.getString("id"),
+            assetId = item.getString("asset_id"),
+            title = item.getString("title"),
+            description = item.getString("description"),
+            severity = item.getString("severity"),
+            status = item.getString("status"),
+            createdAt = item.getString("created_at"),
+            updatedAt = item.getString("updated_at")
+        )
+    }
+
 
 
     // ASSET QR CODE

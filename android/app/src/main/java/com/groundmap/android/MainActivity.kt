@@ -2,6 +2,8 @@
 package com.groundmap.android
 
 import com.groundmap.android.ui.assets.AssetOperationsScreen
+import com.groundmap.android.ui.assets.FaultReportsScreen
+import com.groundmap.android.ui.assets.FaultReportUiData
 import com.groundmap.android.ui.assets.AssetDetailsScreen
 import com.groundmap.android.ui.assets.AssetEditScreen
 import com.groundmap.android.ui.assets.AssetEditFormData
@@ -97,6 +99,17 @@ fun GroundMapApp() {
     var historyLoading by remember { mutableStateOf(false) }
     var historyError by remember { mutableStateOf<String?>(null) }
     var historyRefresh by remember { mutableIntStateOf(0) }
+
+    // FAULT REPORT STATES
+    var faultReports by remember {
+        mutableStateOf<List<FaultReportData>>(emptyList())
+    }
+
+    var faultReportLoading by remember { mutableStateOf(false) }
+    var faultReportSaving by remember { mutableStateOf(false) }
+    var faultReportError by remember { mutableStateOf<String?>(null) }
+    var faultReportSuccess by remember { mutableStateOf<String?>(null) }
+    var faultReportRefresh by remember { mutableIntStateOf(0) }
 
     var assetQrImage by remember {
         mutableStateOf<ByteArray?>(null)
@@ -343,6 +356,68 @@ fun GroundMapApp() {
         }.start()
     }
 
+
+    fun loadFaultReports() {
+        val assetId = selectedAsset?.id ?: return
+
+        faultReportLoading = true
+        faultReportError = null
+
+        Thread {
+            try {
+                val result = GroundMapApi.loadFaultReports(assetId)
+
+                Handler(Looper.getMainLooper()).post {
+                    faultReports = result
+                    faultReportLoading = false
+                    faultReportError = null
+                }
+            } catch (e: Exception) {
+                Handler(Looper.getMainLooper()).post {
+                    faultReportLoading = false
+                    faultReportError =
+                        e.message ?: "Unable to load fault reports."
+                }
+            }
+        }.start()
+    }
+
+    fun submitFaultReport(
+        title: String,
+        description: String,
+        severity: String
+    ) {
+        val assetId = selectedAsset?.id ?: return
+
+        faultReportSaving = true
+        faultReportError = null
+        faultReportSuccess = null
+
+        Thread {
+            try {
+                GroundMapApi.createFaultReport(
+                    assetId = assetId,
+                    title = title,
+                    description = description,
+                    severity = severity
+                )
+
+                Handler(Looper.getMainLooper()).post {
+                    faultReportSaving = false
+                    faultReportSuccess = "Fault report submitted successfully."
+                    faultReportRefresh++
+                }
+            } catch (e: Exception) {
+                Handler(Looper.getMainLooper()).post {
+                    faultReportSaving = false
+                    faultReportError =
+                        e.message ?: "Unable to submit fault report."
+                }
+            }
+        }.start()
+    }
+
+
     fun loadAssetQr() {
         val assetId = selectedAsset?.id ?: return
 
@@ -371,6 +446,12 @@ fun GroundMapApp() {
     LaunchedEffect(selectedTab, selectedAsset?.id, historyRefresh) {
         if (selectedTab == 8 && selectedAsset != null) {
             loadAssetHistory()
+        }
+    }
+
+    LaunchedEffect(selectedTab, selectedAsset?.id, faultReportRefresh) {
+        if (selectedTab == 10 && selectedAsset != null) {
+            loadFaultReports()
         }
     }
 
@@ -649,19 +730,76 @@ fun GroundMapApp() {
                             onViewDetails = {
                                 selectedTab = 6
                             },
-                            onUpdateStatus = {
-                                selectedTab = 6
+                            onUpdateStatus = { status ->
+                                updateAssetStatus(status)
                             },
-                            onUpdateCondition = {
-                                selectedTab = 6
+                            onUpdateCondition = { condition ->
+                                updateAssetCondition(condition)
                             },
                             onReportFault = {
-                                // Fault reporting will be implemented in Phase 4.8.3.
+                                faultReportError = null
+                                faultReportSuccess = null
+                                selectedTab = 10
                             },
                             onViewHistory = {
                                 assetHistory = emptyList()
                                 historyError = null
                                 selectedTab = 8
+                            },
+                            statusSaving = statusSaving,
+                            conditionSaving = conditionSaving,
+                            statusError = statusError,
+                            conditionError = conditionError,
+                            modifier = Modifier.padding(padding)
+                        )
+                    } else {
+                        SimpleScreen(
+                            title = "Asset not selected",
+                            description = "Scan an asset QR code first.",
+                            symbol = "!",
+                            modifier = Modifier.padding(padding)
+                        )
+                    }
+                }
+
+
+                // FAULT REPORTS
+                10 -> {
+                    val asset = selectedAsset
+
+                    if (asset != null) {
+                        FaultReportsScreen(
+                            assetName = asset.name,
+                            assetCode = asset.assetCode,
+                            reports = faultReports.map { report ->
+                                FaultReportUiData(
+                                    id = report.id,
+                                    assetId = report.assetId,
+                                    title = report.title,
+                                    description = report.description,
+                                    severity = report.severity,
+                                    status = report.status,
+                                    createdAt = report.createdAt
+                                )
+                            },
+                            loading = faultReportLoading,
+                            saving = faultReportSaving,
+                            error = faultReportError,
+                            successMessage = faultReportSuccess,
+                            onSubmit = { title, description, severity ->
+                                submitFaultReport(
+                                    title,
+                                    description,
+                                    severity
+                                )
+                            },
+                            onRefresh = {
+                                faultReportRefresh++
+                            },
+                            onBack = {
+                                faultReportError = null
+                                faultReportSuccess = null
+                                selectedTab = 9
                             },
                             modifier = Modifier.padding(padding)
                         )

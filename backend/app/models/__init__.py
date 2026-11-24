@@ -1,3 +1,4 @@
+from app.models.fault_report import FaultReport
 
 from app.models.location import (
     Workspace,
@@ -19,5 +20,6 @@ __all__ = [
     "Floor",
     "Room",
     "Asset",
-    "AssetEvent"
+    "AssetEvent",
+    "FaultReport"
 ]
