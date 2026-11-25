@@ -142,15 +142,23 @@ A typical workflow in GroundMap:
 
 ## 🖼️ Screenshots
 
-Add screenshots of the current app here to showcase its interface.
+### Dashboard
+![GroundMap Dashboard](screenshots/dashboard.png)
 
-| Dashboard | Asset Operations |
-|---|---|
-| *Add Dashboard screenshot* | *Add Asset Operations screenshot* |
+### Asset Registry
+![GroundMap Asset Registry](screenshots/asset-registry.png)
 
-| Fault Reports | Activity History |
-|---|---|
-| *Add Fault Reports screenshot* | *Add Activity History screenshot* |
+### QR Scanner
+![GroundMap QR Scanner](screenshots/qr-scanner.png)
+
+### Activity History
+![GroundMap Activity History](screenshots/activity.png)
+
+### Workspace
+![GroundMap Workspace](screenshots/workspace.png)
+
+### Asset Details
+![GroundMap Asset Details](screenshots/asset-details.png)
 
 ## 🧪 Development Status
 
