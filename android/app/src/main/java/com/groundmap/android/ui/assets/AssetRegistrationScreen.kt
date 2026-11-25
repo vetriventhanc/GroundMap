@@ -1,11 +1,10 @@
-
 package com.groundmap.android.ui.assets
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -29,11 +28,14 @@ data class AssetFormData(
     val notes: String?
 )
 
-private val FormBackground = Color(0xFF0B1120)
-private val FormCard = Color(0xFF151F32)
+private val FormBackground = Color(0xFF0B1020)
+private val FormCard = Color(0xFF171D3A)
 private val FormWhite = Color(0xFFF8FAFC)
-private val FormMuted = Color(0xFF94A3B8)
-private val FormAccent = Color(0xFF3B82F6)
+private val FormMuted = Color(0xFFA5AEC8)
+private val FormAccent = Color(0xFF8B5CF6)
+private val FormBorder = Color(0xFF303858)
+private val FormError = Color(0xFFEF4444)
+private val FormSuccess = Color(0xFF22C55E)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -82,228 +84,244 @@ fun AssetRegistrationScreen(
             .fillMaxSize()
             .background(FormBackground)
             .verticalScroll(rememberScrollState())
-            .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+            .padding(horizontal = 18.dp)
+            .padding(top = 12.dp, bottom = 110.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-
-        TextButton(onClick = onBack) {
-            Text("← Back to Assets", color = FormAccent)
+        TextButton(
+            onClick = onBack,
+            contentPadding = PaddingValues(horizontal = 0.dp, vertical = 4.dp)
+        ) {
+            Text(
+                text = "← Back to Assets",
+                color = FormAccent,
+                fontSize = 14.sp
+            )
         }
 
-        Text(
-            "Register Asset",
-            color = FormWhite,
-            fontSize = 26.sp
-        )
-
-        Text(
-            "Add equipment to your workspace inventory.",
-            color = FormMuted,
-            fontSize = 13.sp
-        )
-
-        FormSection("Workspace")
-
-        ExposedDropdownMenuBox(
-            expanded = workspaceMenu,
-            onExpandedChange = { workspaceMenu = it }
-        ) {
-            OutlinedTextField(
-                value = selectedWorkspace?.name ?: "",
-                onValueChange = {},
-                readOnly = true,
-                label = { Text("Select workspace") },
-                trailingIcon = {
-                    ExposedDropdownMenuDefaults.TrailingIcon(
-                        expanded = workspaceMenu
-                    )
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .menuAnchor(),
-                colors = formFieldColors()
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(
+                text = "Register Asset",
+                color = FormWhite,
+                fontSize = 27.sp
             )
 
-            ExposedDropdownMenu(
+            Text(
+                text = "Add equipment to your workspace inventory.",
+                color = FormMuted,
+                fontSize = 13.sp
+            )
+        }
+
+        FormCardSection(
+            title = "Workspace",
+            subtitle = "Choose where this asset belongs."
+        ) {
+            ExposedDropdownMenuBox(
                 expanded = workspaceMenu,
-                onDismissRequest = { workspaceMenu = false }
+                onExpandedChange = { workspaceMenu = it }
             ) {
-                workspaces.forEach { workspace ->
-                    DropdownMenuItem(
-                        text = { Text(workspace.name) },
-                        onClick = {
-                            selectedWorkspace = workspace
-                            workspaceMenu = false
-                        }
-                    )
+                OutlinedTextField(
+                    value = selectedWorkspace?.name ?: "",
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Select workspace") },
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(
+                            expanded = workspaceMenu
+                        )
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .menuAnchor(),
+                    colors = formFieldColors()
+                )
+
+                ExposedDropdownMenu(
+                    expanded = workspaceMenu,
+                    onDismissRequest = { workspaceMenu = false }
+                ) {
+                    workspaces.forEach { workspace ->
+                        DropdownMenuItem(
+                            text = { Text(workspace.name) },
+                            onClick = {
+                                selectedWorkspace = workspace
+                                workspaceMenu = false
+                            }
+                        )
+                    }
                 }
             }
         }
 
-        FormSection("Basic Information")
-
-        FormInput(
-            "Asset Code *",
-            assetCode
-        ) { assetCode = it }
-
-        FormInput(
-            "Asset Name *",
-            name
-        ) { name = it }
-
-        FormInput(
-            "Category *",
-            category
-        ) { category = it }
-
-        FormSection("Equipment Information")
-
-        FormInput(
-            "Manufacturer",
-            manufacturer
-        ) { manufacturer = it }
-
-        FormInput(
-            "Model Number",
-            modelNumber
-        ) { modelNumber = it }
-
-        FormInput(
-            "Serial Number",
-            serialNumber
-        ) { serialNumber = it }
-
-        FormSection("Location and Purchase")
-
-        FormInput(
-            "Room ID (optional UUID)",
-            roomId
-        ) { roomId = it }
-
-        FormInput(
-            "Purchase Date (YYYY-MM-DD)",
-            purchaseDate
-        ) { purchaseDate = it }
-
-        FormSection("Asset Status")
-
-        ExposedDropdownMenuBox(
-            expanded = statusMenu,
-            onExpandedChange = { statusMenu = it }
+        FormCardSection(
+            title = "Basic Information",
+            subtitle = "Enter the asset’s identifying details."
         ) {
-            OutlinedTextField(
-                value = status,
-                onValueChange = {},
-                readOnly = true,
-                label = { Text("Status") },
-                trailingIcon = {
-                    ExposedDropdownMenuDefaults.TrailingIcon(
-                        expanded = statusMenu
-                    )
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .menuAnchor(),
-                colors = formFieldColors()
-            )
+            FormInput("Asset Code *", assetCode) {
+                assetCode = it
+            }
 
-            ExposedDropdownMenu(
+            FormInput("Asset Name *", name) {
+                name = it
+            }
+
+            FormInput("Category *", category) {
+                category = it
+            }
+        }
+
+        FormCardSection(
+            title = "Equipment Information",
+            subtitle = "Optional manufacturer and equipment details."
+        ) {
+            FormInput("Manufacturer", manufacturer) {
+                manufacturer = it
+            }
+
+            FormInput("Model Number", modelNumber) {
+                modelNumber = it
+            }
+
+            FormInput("Serial Number", serialNumber) {
+                serialNumber = it
+            }
+        }
+
+        FormCardSection(
+            title = "Location & Purchase",
+            subtitle = "Add the room and purchase information, if available."
+        ) {
+            FormInput("Room ID (optional UUID)", roomId) {
+                roomId = it
+            }
+
+            FormInput("Purchase Date (YYYY-MM-DD)", purchaseDate) {
+                purchaseDate = it
+            }
+        }
+
+        FormCardSection(
+            title = "Asset Status",
+            subtitle = "Set the current status and physical condition."
+        ) {
+            ExposedDropdownMenuBox(
                 expanded = statusMenu,
-                onDismissRequest = { statusMenu = false }
+                onExpandedChange = { statusMenu = it }
             ) {
-                listOf(
-                    "active",
-                    "maintenance",
-                    "inactive",
-                    "retired"
-                ).forEach {
-                    DropdownMenuItem(
-                        text = { Text(it) },
-                        onClick = {
-                            status = it
-                            statusMenu = false
-                        }
-                    )
+                OutlinedTextField(
+                    value = status,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Status") },
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(
+                            expanded = statusMenu
+                        )
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .menuAnchor(),
+                    colors = formFieldColors()
+                )
+
+                ExposedDropdownMenu(
+                    expanded = statusMenu,
+                    onDismissRequest = { statusMenu = false }
+                ) {
+                    listOf(
+                        "active",
+                        "maintenance",
+                        "inactive",
+                        "retired"
+                    ).forEach { option ->
+                        DropdownMenuItem(
+                            text = { Text(option) },
+                            onClick = {
+                                status = option
+                                statusMenu = false
+                            }
+                        )
+                    }
+                }
+            }
+
+            ExposedDropdownMenuBox(
+                expanded = conditionMenu,
+                onExpandedChange = { conditionMenu = it }
+            ) {
+                OutlinedTextField(
+                    value = condition,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Condition") },
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(
+                            expanded = conditionMenu
+                        )
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .menuAnchor(),
+                    colors = formFieldColors()
+                )
+
+                ExposedDropdownMenu(
+                    expanded = conditionMenu,
+                    onDismissRequest = { conditionMenu = false }
+                ) {
+                    listOf(
+                        "new",
+                        "good",
+                        "fair",
+                        "poor",
+                        "damaged"
+                    ).forEach { option ->
+                        DropdownMenuItem(
+                            text = { Text(option) },
+                            onClick = {
+                                condition = option
+                                conditionMenu = false
+                            }
+                        )
+                    }
                 }
             }
         }
 
-        ExposedDropdownMenuBox(
-            expanded = conditionMenu,
-            onExpandedChange = { conditionMenu = it }
+        FormCardSection(
+            title = "Additional Notes",
+            subtitle = "Include any useful details about this asset."
         ) {
             OutlinedTextField(
-                value = condition,
-                onValueChange = {},
-                readOnly = true,
-                label = { Text("Condition") },
-                trailingIcon = {
-                    ExposedDropdownMenuDefaults.TrailingIcon(
-                        expanded = conditionMenu
-                    )
-                },
+                value = notes,
+                onValueChange = { notes = it },
+                label = { Text("Notes") },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .menuAnchor(),
+                    .height(130.dp),
                 colors = formFieldColors()
             )
-
-            ExposedDropdownMenu(
-                expanded = conditionMenu,
-                onDismissRequest = { conditionMenu = false }
-            ) {
-                listOf(
-                    "new",
-                    "good",
-                    "fair",
-                    "poor",
-                    "damaged"
-                ).forEach {
-                    DropdownMenuItem(
-                        text = { Text(it) },
-                        onClick = {
-                            condition = it
-                            conditionMenu = false
-                        }
-                    )
-                }
-            }
         }
-
-        FormSection("Additional Notes")
-
-        OutlinedTextField(
-            value = notes,
-            onValueChange = { notes = it },
-            label = { Text("Notes") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(120.dp),
-            colors = formFieldColors()
-        )
 
         if (validationError != null) {
-            Text(
-                validationError!!,
-                color = Color(0xFFEF4444),
-                fontSize = 12.sp
+            FormMessage(
+                message = validationError.orEmpty(),
+                color = FormError
             )
         }
 
         if (error != null) {
-            Text(
-                error,
-                color = Color(0xFFEF4444),
-                fontSize = 12.sp
+            FormMessage(
+                message = error,
+                color = FormError
             )
         }
 
         if (saveMessage != null) {
-            Text(
-                saveMessage,
-                color = Color(0xFF22C55E),
-                fontSize = 13.sp
+            FormMessage(
+                message = saveMessage,
+                color = FormSuccess
             )
         }
 
@@ -323,9 +341,7 @@ fun AssetRegistrationScreen(
                         "Category must contain 2–100 characters."
 
                     purchaseDate.isNotBlank() &&
-                            !purchaseDate.matches(
-                                Regex("""\d{4}-\d{2}-\d{2}""")
-                            ) ->
+                            !purchaseDate.matches(Regex("""\d{4}-\d{2}-\d{2}""")) ->
                         "Purchase date must use YYYY-MM-DD."
 
                     else -> null
@@ -353,44 +369,90 @@ fun AssetRegistrationScreen(
             enabled = !saving && !loading && workspaces.isNotEmpty(),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(54.dp),
-            shape = RoundedCornerShape(12.dp),
+                .height(56.dp),
+            shape = RoundedCornerShape(14.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = FormAccent
+                containerColor = FormAccent,
+                disabledContainerColor = FormAccent.copy(alpha = 0.4f)
             )
         ) {
             if (saving) {
                 CircularProgressIndicator(
-                    modifier = Modifier.size(20.dp),
-                    color = Color.White
+                    modifier = Modifier.size(21.dp),
+                    color = Color.White,
+                    strokeWidth = 2.dp
                 )
             } else {
-                Text("Register Asset")
+                Text(
+                    text = "Register Asset",
+                    fontSize = 15.sp
+                )
             }
         }
 
         if (loading) {
-            CircularProgressIndicator(color = FormAccent)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                CircularProgressIndicator(
+                    color = FormAccent,
+                    modifier = Modifier.size(24.dp),
+                    strokeWidth = 2.dp
+                )
+            }
         }
 
         if (!loading && workspaces.isEmpty()) {
-            Text(
-                "No workspaces available. Create a workspace first.",
+            FormMessage(
+                message = "No workspaces available. Create a workspace first.",
                 color = FormMuted
             )
         }
-
-        Spacer(Modifier.height(24.dp))
     }
 }
 
 @Composable
-private fun FormSection(title: String) {
-    Text(
-        title,
-        color = FormAccent,
-        fontSize = 15.sp
-    )
+private fun FormCardSection(
+    title: String,
+    subtitle: String,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = FormCard
+        ),
+        border = androidx.compose.foundation.BorderStroke(
+            width = 1.dp,
+            color = FormBorder
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(13.dp),
+            content = {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        text = title,
+                        color = FormAccent,
+                        fontSize = 15.sp
+                    )
+
+                    Text(
+                        text = subtitle,
+                        color = FormMuted,
+                        fontSize = 12.sp
+                    )
+                }
+
+                content()
+            }
+        )
+    }
 }
 
 @Composable
@@ -410,15 +472,27 @@ private fun FormInput(
 }
 
 @Composable
+private fun FormMessage(
+    message: String,
+    color: Color
+) {
+    Text(
+        text = message,
+        color = color,
+        fontSize = 12.sp
+    )
+}
+
+@Composable
 private fun formFieldColors() =
     OutlinedTextFieldDefaults.colors(
         focusedTextColor = FormWhite,
         unfocusedTextColor = FormWhite,
         focusedBorderColor = FormAccent,
-        unfocusedBorderColor = Color(0xFF334155),
+        unfocusedBorderColor = FormBorder,
         focusedLabelColor = FormAccent,
         unfocusedLabelColor = FormMuted,
         cursorColor = FormAccent,
-        focusedContainerColor = FormCard,
-        unfocusedContainerColor = FormCard
+        focusedContainerColor = FormBackground,
+        unfocusedContainerColor = FormBackground
     )
