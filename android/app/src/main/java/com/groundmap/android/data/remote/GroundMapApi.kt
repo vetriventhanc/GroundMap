@@ -55,6 +55,7 @@ data class FaultReportData(
     val description: String,
     val severity: String,
     val status: String,
+    val resolutionNotes: String?,
     val createdAt: String,
     val updatedAt: String
 )
@@ -394,6 +395,35 @@ object GroundMapApi {
         }
     }
 
+    fun updateFaultReport(
+        assetId: String,
+        reportId: String,
+        status: String,
+        resolutionNotes: String?
+    ): FaultReportData {
+        require(status in listOf("open", "in_progress", "resolved")) {
+            "Invalid fault report status: $status"
+        }
+
+        val body = JSONObject().apply {
+            put("status", status)
+            put(
+                "resolution_notes",
+                resolutionNotes?.trim()?.takeIf { it.isNotBlank() } ?: JSONObject.NULL
+            )
+        }
+
+        val response = JSONObject(
+            request(
+                "/api/v1/assets/$assetId/fault-reports/$reportId",
+                "PATCH",
+                body
+            )
+        )
+
+        return parseFaultReport(response)
+    }
+
     private fun parseFaultReport(
         item: JSONObject
     ): FaultReportData {
@@ -404,6 +434,8 @@ object GroundMapApi {
             description = item.getString("description"),
             severity = item.getString("severity"),
             status = item.getString("status"),
+            resolutionNotes = item.optString("resolution_notes")
+                .takeIf { it.isNotBlank() && it != "null" },
             createdAt = item.getString("created_at"),
             updatedAt = item.getString("updated_at")
         )

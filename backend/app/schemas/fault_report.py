@@ -29,5 +29,20 @@ class FaultReportResponse(BaseModel):
     description: str
     severity: str
     status: str
+    resolution_notes: str | None = None
     created_at: datetime
     updated_at: datetime
+
+FaultReportStatus = Literal[
+    "open",
+    "in_progress",
+    "resolved",
+]
+
+
+class FaultReportUpdate(BaseModel):
+    status: FaultReportStatus
+    resolution_notes: str | None = Field(
+        default=None,
+        max_length=5000,
+    )

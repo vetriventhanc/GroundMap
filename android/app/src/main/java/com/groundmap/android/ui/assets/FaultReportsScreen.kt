@@ -1,4 +1,3 @@
-
 package com.groundmap.android.ui.assets
 
 import androidx.compose.foundation.background
@@ -14,7 +13,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import java.util.UUID
 
 private val FaultBackground = Color(0xFF0B1120)
 private val FaultCard = Color(0xFF151F32)
@@ -32,7 +30,8 @@ data class FaultReportUiData(
     val description: String,
     val severity: String,
     val status: String,
-    val createdAt: String
+    val createdAt: String,
+    val resolutionNotes: String? = null
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -48,6 +47,7 @@ fun FaultReportsScreen(
     onSubmit: (String, String, String) -> Unit,
     onRefresh: () -> Unit,
     onBack: () -> Unit,
+    onUpdateReport: (String, String, String?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var title by remember { mutableStateOf("") }
@@ -95,8 +95,6 @@ fun FaultReportsScreen(
                 fontSize = 13.sp
             )
         }
-
-        // NEW FAULT REPORT FORM
 
         FaultSection(title = "Submit a Fault Report") {
             OutlinedTextField(
@@ -206,8 +204,6 @@ fun FaultReportsScreen(
             }
         }
 
-        // EXISTING FAULT REPORTS
-
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -258,7 +254,11 @@ fun FaultReportsScreen(
 
             else -> {
                 reports.forEach { report ->
-                    FaultReportCard(report)
+                    FaultReportCard(
+                        report = report,
+                        saving = saving,
+                        onUpdateReport = onUpdateReport
+                    )
                 }
             }
         }
@@ -295,14 +295,29 @@ private fun FaultSection(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun FaultReportCard(report: FaultReportUiData) {
+private fun FaultReportCard(
+    report: FaultReportUiData,
+    saving: Boolean,
+    onUpdateReport: (String, String, String?) -> Unit
+) {
     val severityColor = when (report.severity.lowercase()) {
         "critical" -> FaultRed
         "high" -> FaultOrange
         "medium" -> FaultAccent
         else -> FaultGreen
     }
+
+    var selectedStatus by remember(report.id, report.status) {
+        mutableStateOf(report.status.lowercase())
+    }
+    var resolutionNotes by remember(report.id, report.resolutionNotes) {
+        mutableStateOf(report.resolutionNotes.orEmpty())
+    }
+    var statusMenuExpanded by remember { mutableStateOf(false) }
+
+    val statuses = listOf("open", "in_progress", "resolved")
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -337,7 +352,7 @@ private fun FaultReportCard(report: FaultReportUiData) {
                 )
 
                 FaultTag(
-                    report.status.uppercase(),
+                    report.status.replace("_", " ").uppercase(),
                     FaultAccent
                 )
             }
@@ -347,6 +362,97 @@ private fun FaultReportCard(report: FaultReportUiData) {
                 color = FaultMuted,
                 fontSize = 10.sp
             )
+
+            Divider(color = Color(0xFF334155))
+
+            Text(
+                "Manage Report",
+                color = FaultWhite,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            ExposedDropdownMenuBox(
+                expanded = statusMenuExpanded,
+                onExpandedChange = { statusMenuExpanded = it }
+            ) {
+                OutlinedTextField(
+                    value = selectedStatus
+                        .replace("_", " ")
+                        .replaceFirstChar { it.uppercase() },
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Status") },
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(
+                            expanded = statusMenuExpanded
+                        )
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .menuAnchor(),
+                    colors = faultFieldColors()
+                )
+
+                ExposedDropdownMenu(
+                    expanded = statusMenuExpanded,
+                    onDismissRequest = { statusMenuExpanded = false }
+                ) {
+                    statuses.forEach { status ->
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    status.replace("_", " ")
+                                        .replaceFirstChar { it.uppercase() }
+                                )
+                            },
+                            onClick = {
+                                selectedStatus = status
+                                statusMenuExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
+
+            OutlinedTextField(
+                value = resolutionNotes,
+                onValueChange = { resolutionNotes = it },
+                label = { Text("Resolution notes") },
+                placeholder = {
+                    Text("Describe the work completed or next steps...")
+                },
+                minLines = 3,
+                modifier = Modifier.fillMaxWidth(),
+                colors = faultFieldColors()
+            )
+
+            Button(
+                onClick = {
+                    onUpdateReport(
+                        report.id,
+                        selectedStatus,
+                        resolutionNotes.trim().ifBlank { null }
+                    )
+                },
+                enabled = !saving,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = FaultAccent
+                )
+            ) {
+                if (saving) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        color = FaultWhite,
+                        strokeWidth = 2.dp
+                    )
+                    Spacer(Modifier.width(10.dp))
+                    Text("Saving...")
+                } else {
+                    Text("Save Update")
+                }
+            }
         }
     }
 }

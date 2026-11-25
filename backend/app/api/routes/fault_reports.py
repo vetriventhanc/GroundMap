@@ -14,6 +14,12 @@ from app.schemas.fault_report import (
     FaultReportResponse,
 )
 
+from app.schemas.fault_report import (
+    FaultReportCreate,
+    FaultReportResponse,
+    FaultReportUpdate,
+)
+
 
 router = APIRouter(
     prefix="/api/v1/assets",
@@ -100,3 +106,64 @@ def list_fault_reports(
     )
 
     return db.scalars(query).all()
+
+
+@router.patch(
+    "/{asset_id}/fault-reports/{report_id}",
+    response_model=FaultReportResponse,
+)
+def update_fault_report(
+    asset_id: uuid.UUID,
+    report_id: uuid.UUID,
+    payload: FaultReportUpdate,
+    db: Session = Depends(get_db),
+):
+    get_asset_or_404(db, asset_id)
+
+    report = db.scalar(
+        select(FaultReport).where(
+            FaultReport.id == report_id,
+            FaultReport.asset_id == asset_id,
+        )
+    )
+
+    if report is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Fault report not found",
+        )
+
+    old_status = report.status
+    report.status = payload.status
+
+    if payload.resolution_notes is not None:
+        report.resolution_notes = payload.resolution_notes.strip() or None
+
+    if old_status != report.status:
+        event = AssetEvent(
+            asset_id=asset_id,
+            event_type="fault_report_status_changed",
+            description=(
+                f"Fault report '{report.title}' status changed "
+                f"from {old_status} to {report.status}"
+            ),
+            old_value={
+                "fault_report_id": str(report.id),
+                "status": old_status,
+            },
+            new_value={
+                "fault_report_id": str(report.id),
+                "status": report.status,
+                "resolution_notes": report.resolution_notes,
+            },
+        )
+        db.add(event)
+
+    try:
+        db.commit()
+        db.refresh(report)
+    except Exception:
+        db.rollback()
+        raise
+
+    return report

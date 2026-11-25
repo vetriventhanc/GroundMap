@@ -417,6 +417,41 @@ fun GroundMapApp() {
         }.start()
     }
 
+    fun updateFaultReport(
+        reportId: String,
+        status: String,
+        resolutionNotes: String?
+    ) {
+        val assetId = selectedAsset?.id ?: return
+
+        faultReportSaving = true
+        faultReportError = null
+        faultReportSuccess = null
+
+        Thread {
+            try {
+                GroundMapApi.updateFaultReport(
+                    assetId = assetId,
+                    reportId = reportId,
+                    status = status,
+                    resolutionNotes = resolutionNotes
+                )
+
+                Handler(Looper.getMainLooper()).post {
+                    faultReportSaving = false
+                    faultReportSuccess = "Fault report updated successfully."
+                    faultReportRefresh++
+                }
+            } catch (e: Exception) {
+                Handler(Looper.getMainLooper()).post {
+                    faultReportSaving = false
+                    faultReportError =
+                        e.message ?: "Unable to update fault report."
+                }
+            }
+        }.start()
+    }
+
 
     fun loadAssetQr() {
         val assetId = selectedAsset?.id ?: return
@@ -779,6 +814,7 @@ fun GroundMapApp() {
                                     description = report.description,
                                     severity = report.severity,
                                     status = report.status,
+                                    resolutionNotes = report.resolutionNotes,
                                     createdAt = report.createdAt
                                 )
                             },
@@ -792,6 +828,9 @@ fun GroundMapApp() {
                                     description,
                                     severity
                                 )
+                            },
+                            onUpdateReport = { reportId, status, notes ->
+                                updateFaultReport(reportId, status, notes)
                             },
                             onRefresh = {
                                 faultReportRefresh++
