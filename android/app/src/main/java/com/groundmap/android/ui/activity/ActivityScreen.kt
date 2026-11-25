@@ -15,7 +15,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -23,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.groundmap.android.data.remote.AssetHistoryData
 
 data class ActivityFeedItem(
@@ -59,19 +59,23 @@ fun ActivityScreen(
             Column {
                 Text(
                     text = "Activity",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = ActivityWhite
+                    color = ActivityWhite,
+                    fontSize = 25.sp,
+                    fontWeight = FontWeight.Bold
                 )
+
                 Text(
                     text = "Recent events across workspace assets",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = ActivityMuted
+                    color = ActivityMuted,
+                    fontSize = 13.sp
                 )
             }
 
             Button(onClick = onRefresh) {
-                Text("Refresh")
+                Text(
+                    text = "Refresh",
+                    fontSize = 12.sp
+                )
             }
         }
 
@@ -84,14 +88,22 @@ fun ActivityScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     CircularProgressIndicator(color = ActivityAccent)
+
                     Spacer(modifier = Modifier.height(12.dp))
-                    Text("Loading activity…", color = ActivityMuted)
+
+                    Text(
+                        text = "Loading activity…",
+                        color = ActivityMuted,
+                        fontSize = 12.sp
+                    )
                 }
             }
 
             error != null -> {
                 Card(
-                    colors = CardDefaults.cardColors(containerColor = ActivityCard),
+                    colors = CardDefaults.cardColors(
+                        containerColor = ActivityCard
+                    ),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(
@@ -101,11 +113,21 @@ fun ActivityScreen(
                         Text(
                             text = "Couldn’t load activity",
                             color = ActivityWhite,
+                            fontSize = 16.sp,
                             fontWeight = FontWeight.Bold
                         )
-                        Text(text = error, color = ActivityMuted)
+
+                        Text(
+                            text = error,
+                            color = ActivityMuted,
+                            fontSize = 12.sp
+                        )
+
                         Button(onClick = onRefresh) {
-                            Text("Try again")
+                            Text(
+                                text = "Try again",
+                                fontSize = 12.sp
+                            )
                         }
                     }
                 }
@@ -115,6 +137,7 @@ fun ActivityScreen(
                 Text(
                     text = "No asset activity found yet.",
                     color = ActivityMuted,
+                    fontSize = 12.sp,
                     modifier = Modifier.padding(top = 24.dp)
                 )
             }
@@ -141,7 +164,9 @@ fun ActivityScreen(
 private fun ActivityEventCard(item: ActivityFeedItem) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = ActivityCard)
+        colors = CardDefaults.cardColors(
+            containerColor = ActivityCard
+        )
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -152,14 +177,14 @@ private fun ActivityEventCard(item: ActivityFeedItem) {
                     .replace('_', ' ')
                     .replaceFirstChar { it.uppercase() },
                 color = ActivityAccent,
-                fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.titleMedium
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold
             )
 
             Text(
                 text = item.event.description,
                 color = ActivityWhite,
-                style = MaterialTheme.typography.bodyMedium
+                fontSize = 13.sp
             )
 
             Text(
@@ -167,13 +192,13 @@ private fun ActivityEventCard(item: ActivityFeedItem) {
                     .filter { it.isNotBlank() }
                     .joinToString(" • "),
                 color = ActivityMuted,
-                style = MaterialTheme.typography.bodySmall
+                fontSize = 11.sp
             )
 
             Text(
                 text = item.event.createdAt,
                 color = ActivityMuted,
-                style = MaterialTheme.typography.bodySmall
+                fontSize = 10.sp
             )
         }
     }
