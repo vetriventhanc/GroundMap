@@ -16,9 +16,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.groundmap.android.data.remote.AssetData
 
-private val OperationsBackground = Color(0xFF0B1120)
-private val OperationsCard = Color(0xFF151F32)
-private val OperationsAccent = Color(0xFF3B82F6)
+private val OperationsBackground = Color(0xFF0B1023)
+private val OperationsCard = Color(0xFF171F3B)
+private val OperationsAccent = Color(0xFF9B5CFF)
 private val OperationsGreen = Color(0xFF22C55E)
 private val OperationsOrange = Color(0xFFF59E0B)
 private val OperationsRed = Color(0xFFEF4444)
