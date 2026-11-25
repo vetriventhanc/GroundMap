@@ -945,45 +945,60 @@ fun DashboardScreen(
     onRefresh: () -> Unit,
     onNavigate: (Int) -> Unit
 ) {
-    val operational = assets.count { it.status == "active" }
-    val maintenance = assets.count { it.status == "maintenance" }
-    val damaged = assets.count { it.condition == "damaged" }
+    val operational = assets.count { it.status.equals("active", ignoreCase = true) }
+    val maintenance = assets.count { it.status.equals("maintenance", ignoreCase = true) }
+    val damaged = assets.count { it.condition.equals("damaged", ignoreCase = true) }
+
+    val categoryCounts = assets
+        .groupBy { it.category.ifBlank { "Uncategorized" } }
+        .mapValues { it.value.size }
+        .toList()
+        .sortedByDescending { it.second }
+        .take(5)
+
+    val maxCategoryCount = categoryCounts.maxOfOrNull { it.second } ?: 1
+
+    val pageBackground = Color(0xFF0B1024)
+    val panelColor = Color(0xFF171D38)
+    val purple = Color(0xFF8B5CF6)
+    val lightText = Color(0xFFF8FAFC)
+    val mutedText = Color(0xFFA8B2D1)
 
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
-            .background(Background),
+            .background(pageBackground),
         contentPadding = PaddingValues(
-            start = 20.dp,
-            top = 24.dp,
-            end = 20.dp,
+            start = 18.dp,
+            top = 20.dp,
+            end = 18.dp,
             bottom = 24.dp
         ),
-        verticalArrangement = Arrangement.spacedBy(22.dp)
+        verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
         item {
             Column {
                 Text(
-                    "GROUNDMAP  /  OVERVIEW",
-                    color = Accent,
-                    fontSize = 11.sp,
+                    "GroundMap",
+                    color = lightText,
+                    fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
 
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(18.dp))
 
                 Text(
-                    "Your operations",
-                    color = White,
-                    fontSize = 28.sp,
+                    "Asset Dashboard",
+                    color = lightText,
+                    fontSize = 25.sp,
                     fontWeight = FontWeight.Bold
                 )
 
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.height(5.dp))
 
                 Text(
-                    "A clear view of your physical assets.",
-                    color = Muted,
+                    "Real-time facility insights",
+                    color = mutedText,
                     fontSize = 13.sp
                 )
             }
@@ -992,100 +1007,73 @@ fun DashboardScreen(
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(22.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFF202D50)
-                )
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = panelColor)
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(20.dp)
-                ) {
+                Column(Modifier.padding(16.dp)) {
                     Text(
                         "CURRENT WORKSPACE",
-                        color = Color(0xFFB8C5FF),
+                        color = purple,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold
                     )
 
-                    Spacer(Modifier.height(10.dp))
+                    Spacer(Modifier.height(6.dp))
 
                     Text(
                         workspaceName,
-                        color = White,
-                        fontSize = 21.sp,
-                        fontWeight = FontWeight.Bold
+                        color = lightText,
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.SemiBold
                     )
 
-                    Spacer(Modifier.height(5.dp))
-
-                    Text(
-                        "Connected to GroundMap API",
-                        color = Color(0xFFD0D8F0),
-                        fontSize = 12.sp
-                    )
-
-                    Spacer(Modifier.height(12.dp))
-
-                    TextButton(
-                        onClick = { onNavigate(4) }
-                    ) {
-                        Text(
-                            "Switch workspace  →",
-                            color = Color(0xFFB8C5FF)
-                        )
+                    TextButton(onClick = { onNavigate(4) }) {
+                        Text("Switch workspace  →", color = purple)
                     }
                 }
             }
         }
 
         item {
-            Column {
-                SectionTitle("Asset Overview")
-
-                Spacer(Modifier.height(12.dp))
-
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    StatCard(
+                    DashboardMetricCard(
                         title = "Total Assets",
                         value = assets.size.toString(),
                         symbol = "▦",
-                        color = Accent,
+                        tint = Color(0xFF9B8CFF),
                         modifier = Modifier.weight(1f)
                     )
 
-                    StatCard(
-                        title = "Operational",
+                    DashboardMetricCard(
+                        title = "Active",
                         value = operational.toString(),
                         symbol = "✓",
-                        color = Green,
+                        tint = Color(0xFF65D6B0),
                         modifier = Modifier.weight(1f)
                     )
                 }
 
-                Spacer(Modifier.height(12.dp))
-
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    StatCard(
+                    DashboardMetricCard(
                         title = "Maintenance",
                         value = maintenance.toString(),
                         symbol = "⚙",
-                        color = Orange,
+                        tint = Color(0xFFFFC66D),
                         modifier = Modifier.weight(1f)
                     )
 
-                    StatCard(
+                    DashboardMetricCard(
                         title = "Damaged",
                         value = damaged.toString(),
                         symbol = "!",
-                        color = Red,
+                        tint = Color(0xFFFF8295),
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -1095,26 +1083,99 @@ fun DashboardScreen(
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = CardColor
-                )
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = panelColor)
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 14.dp)
+                        .padding(16.dp)
                 ) {
                     Text(
+                        "Assets by Category",
+                        color = lightText,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Spacer(Modifier.height(14.dp))
+
+                    if (categoryCounts.isEmpty()) {
+                        Text(
+                            "Category information will appear when assets are available.",
+                            color = mutedText,
+                            fontSize = 12.sp
+                        )
+                    } else {
+                        categoryCounts.forEach { (category, count) ->
+                            Column(
+                                modifier = Modifier.padding(bottom = 12.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        category,
+                                        color = mutedText,
+                                        fontSize = 12.sp
+                                    )
+                                    Text(
+                                        count.toString(),
+                                        color = lightText,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                }
+
+                                Spacer(Modifier.height(6.dp))
+
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(8.dp)
+                                        .background(
+                                            Color(0xFF292F4D),
+                                            RoundedCornerShape(8.dp)
+                                        )
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth(
+                                                (count.toFloat() / maxCategoryCount)
+                                                    .coerceIn(0.05f, 1f)
+                                            )
+                                            .fillMaxHeight()
+                                            .background(
+                                                purple,
+                                                RoundedCornerShape(8.dp)
+                                            )
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = panelColor)
+            ) {
+                Column(Modifier.padding(16.dp)) {
+                    Text(
                         when {
-                            loading -> "Synchronizing with GroundMap..."
+                            loading -> "Synchronizing with GroundMap…"
                             error != null -> "Dashboard connection issue"
                             else -> "Dashboard is up to date"
                         },
                         color = when {
-                            loading -> Muted
-                            error != null -> Red
-                            else -> Green
+                            loading -> mutedText
+                            error != null -> Color(0xFFFF8295)
+                            else -> Color(0xFF65D6B0)
                         },
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold
@@ -1124,70 +1185,99 @@ fun DashboardScreen(
                         Spacer(Modifier.height(6.dp))
                         Text(
                             "API error: $error",
-                            color = Red,
+                            color = Color(0xFFFF8295),
                             fontSize = 12.sp
                         )
                     }
 
                     TextButton(onClick = onRefresh) {
-                        Text("Refresh data", color = Accent)
+                        Text("Refresh data", color = purple)
                     }
                 }
             }
         }
 
         item {
-            Column {
-                SectionTitle("Quick Actions")
-
-                Spacer(Modifier.height(12.dp))
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    "Quick Actions",
+                    color = lightText,
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Bold
+                )
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    ActionCard(
-                        title = "View Assets",
-                        description = "Browse equipment",
-                        symbol = "▦",
-                        modifier = Modifier.weight(1f)
+                    Button(
+                        onClick = { onNavigate(1) },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF29234F)
+                        )
                     ) {
-                        onNavigate(1)
+                        Text("View Assets")
                     }
 
-                    ActionCard(
-                        title = "Register Asset",
-                        description = "Add equipment",
-                        symbol = "+",
-                        modifier = Modifier.weight(1f)
+                    Button(
+                        onClick = { onNavigate(5) },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF3D286A)
+                        )
                     ) {
-                        onNavigate(5)
+                        Text("Register Asset")
                     }
                 }
             }
         }
+    }
+}
 
-        item {
-            Column {
-                SectionTitle("Recent Activity")
+@Composable
+private fun DashboardMetricCard(
+    title: String,
+    value: String,
+    symbol: String,
+    tint: Color,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFF171D38)
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp)
+        ) {
+            Text(
+                symbol,
+                color = tint,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold
+            )
 
-                Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(8.dp))
 
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = CardColor
-                    )
-                ) {
-                    Text(
-                        "Activity history will appear here.",
-                        color = Muted,
-                        fontSize = 13.sp,
-                        modifier = Modifier.padding(18.dp)
-                    )
-                }
-            }
+            Text(
+                value,
+                color = Color(0xFFF8FAFC),
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(Modifier.height(3.dp))
+
+            Text(
+                title,
+                color = Color(0xFFA8B2D1),
+                fontSize = 11.sp
+            )
         }
     }
 }

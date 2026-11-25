@@ -1,13 +1,14 @@
-
 package com.groundmap.android.ui.assets
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,10 +19,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.groundmap.android.data.remote.AssetData
 
-private val AssetBackground = Color(0xFF0B1120)
-private val AssetCard = Color(0xFF151F32)
-private val AssetAccent = Color(0xFF3B82F6)
-private val AssetMuted = Color(0xFF94A3B8)
+private val AssetBackground = Color(0xFF0B1024)
+private val AssetPanel = Color(0xFF171D38)
+private val AssetCard = Color(0xFF1C2443)
+private val AssetPurple = Color(0xFF8B5CF6)
+private val AssetMuted = Color(0xFFA8B2D1)
 private val AssetWhite = Color(0xFFF8FAFC)
 
 private val AssetStatuses = listOf(
@@ -49,7 +51,6 @@ private val AssetSortOptions = listOf(
     "Status"
 )
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AssetRegistryScreen(
@@ -63,7 +64,6 @@ fun AssetRegistryScreen(
     var searchQuery by remember { mutableStateOf("") }
     var selectedStatus by remember { mutableStateOf("All") }
     var selectedCondition by remember { mutableStateOf("All") }
-
     var selectedSort by remember { mutableStateOf("Name (A–Z)") }
     var sortMenuExpanded by remember { mutableStateOf(false) }
 
@@ -78,10 +78,10 @@ fun AssetRegistryScreen(
                 searchQuery.isBlank() ||
                         asset.name.contains(searchQuery, ignoreCase = true) ||
                         asset.assetCode.contains(searchQuery, ignoreCase = true) ||
-                        (asset.serialNumber?.contains(
+                        asset.serialNumber?.contains(
                             searchQuery,
                             ignoreCase = true
-                        ) == true)
+                        ) == true
 
             val matchesStatus =
                 selectedStatus == "All" ||
@@ -97,11 +97,20 @@ fun AssetRegistryScreen(
 
     val sortedAssets = remember(filteredAssets, selectedSort) {
         when (selectedSort) {
-            "Name (Z–A)" -> filteredAssets.sortedByDescending { it.name.lowercase() }
-            "Asset Code" -> filteredAssets.sortedBy { it.assetCode.lowercase() }
-            "Condition" -> filteredAssets.sortedBy { it.condition.lowercase() }
-            "Status" -> filteredAssets.sortedBy { it.status.lowercase() }
-            else -> filteredAssets.sortedBy { it.name.lowercase() }
+            "Name (Z–A)" ->
+                filteredAssets.sortedByDescending { it.name.lowercase() }
+
+            "Asset Code" ->
+                filteredAssets.sortedBy { it.assetCode.lowercase() }
+
+            "Condition" ->
+                filteredAssets.sortedBy { it.condition.lowercase() }
+
+            "Status" ->
+                filteredAssets.sortedBy { it.status.lowercase() }
+
+            else ->
+                filteredAssets.sortedBy { it.name.lowercase() }
         }
     }
 
@@ -109,7 +118,8 @@ fun AssetRegistryScreen(
         modifier = modifier
             .fillMaxSize()
             .background(AssetBackground)
-            .padding(20.dp)
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 18.dp, vertical = 16.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -118,69 +128,35 @@ fun AssetRegistryScreen(
         ) {
             Column {
                 Text(
-                    "GROUNDMAP",
-                    color = AssetAccent,
-                    fontSize = 11.sp,
+                    text = "GROUNDMAP",
+                    color = AssetPurple,
+                    fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 2.sp
                 )
 
-                Spacer(Modifier.height(7.dp))
+                Spacer(Modifier.height(5.dp))
 
                 Text(
-                    "Asset Registry",
+                    text = "Asset Registry",
                     color = AssetWhite,
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold
                 )
+
+                Text(
+                    text = "Browse and manage your assets",
+                    color = AssetMuted,
+                    fontSize = 12.sp
+                )
             }
 
             TextButton(onClick = onRefresh) {
-                Text("Refresh ↻", color = AssetAccent)
+                Text("Refresh ↻", color = AssetPurple)
             }
         }
 
-        Spacer(Modifier.height(14.dp))
-
-        Text(
-            "FILTER BY CONDITION",
-            color = AssetMuted,
-            fontSize = 10.sp,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 1.5.sp
-        )
-
-        Spacer(Modifier.height(8.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            AssetConditions.forEach { condition ->
-                val selected = selectedCondition == condition
-
-                FilterChip(
-                    selected = selected,
-                    onClick = { selectedCondition = condition },
-                    label = {
-                        Text(
-                            if (condition == "All") "All"
-                            else condition.replaceFirstChar { it.uppercase() },
-                            fontSize = 10.sp,
-                            maxLines = 1
-                        )
-                    },
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = AssetAccent,
-                        selectedLabelColor = Color.White,
-                        containerColor = AssetCard,
-                        labelColor = AssetMuted
-                    )
-                )
-            }
-        }
-
-        Spacer(Modifier.height(18.dp))
+        Spacer(Modifier.height(16.dp))
 
         OutlinedTextField(
             value = searchQuery,
@@ -194,135 +170,178 @@ fun AssetRegistryScreen(
                     fontSize = 12.sp
                 )
             },
-            shape = RoundedCornerShape(14.dp),
+            shape = RoundedCornerShape(16.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedTextColor = AssetWhite,
                 unfocusedTextColor = AssetWhite,
-                focusedBorderColor = AssetAccent,
-                unfocusedBorderColor = Color(0xFF334155),
-                cursorColor = AssetAccent,
-                focusedContainerColor = AssetCard,
-                unfocusedContainerColor = AssetCard
+                focusedBorderColor = AssetPurple,
+                unfocusedBorderColor = Color(0xFF343D62),
+                cursorColor = AssetPurple,
+                focusedContainerColor = AssetPanel,
+                unfocusedContainerColor = AssetPanel
             )
         )
 
-        ExposedDropdownMenuBox(
-            expanded = sortMenuExpanded,
-            onExpandedChange = { sortMenuExpanded = it },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            OutlinedTextField(
-                value = selectedSort,
-                onValueChange = {},
-                readOnly = true,
-                label = { Text("Sort by", color = AssetMuted) },
-                trailingIcon = {
-                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = sortMenuExpanded)
-                },
-                modifier = Modifier
-                    .menuAnchor()
-                    .fillMaxWidth(),
-                shape = RoundedCornerShape(14.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = AssetWhite,
-                    unfocusedTextColor = AssetWhite,
-                    focusedBorderColor = AssetAccent,
-                    unfocusedBorderColor = Color(0xFF334155),
-                    focusedContainerColor = AssetCard,
-                    unfocusedContainerColor = AssetCard
-                )
-            )
+        Spacer(Modifier.height(14.dp))
 
-            ExposedDropdownMenu(
-                expanded = sortMenuExpanded,
-                onDismissRequest = { sortMenuExpanded = false }
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(18.dp),
+            colors = CardDefaults.cardColors(containerColor = AssetPanel)
+        ) {
+            Column(
+                modifier = Modifier.padding(14.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                AssetSortOptions.forEach { option ->
-                    DropdownMenuItem(
-                        text = { Text(option) },
-                        onClick = {
-                            selectedSort = option
-                            sortMenuExpanded = false
-                        }
+                Column {
+                    Text(
+                        text = "CONDITION",
+                        color = AssetMuted,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.2.sp
                     )
+
+                    Spacer(Modifier.height(7.dp))
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        AssetConditions.forEach { condition ->
+                            RegistryFilterChip(
+                                label = if (condition == "All") "All"
+                                else condition.replaceFirstChar { it.uppercase() },
+                                selected = selectedCondition == condition,
+                                onClick = { selectedCondition = condition }
+                            )
+                        }
+                    }
+                }
+
+                HorizontalDivider(color = Color(0xFF303858))
+
+                Column {
+                    Text(
+                        text = "STATUS",
+                        color = AssetMuted,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.2.sp
+                    )
+
+                    Spacer(Modifier.height(7.dp))
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        AssetStatuses.forEach { status ->
+                            val label = when (status) {
+                                "All" -> "All"
+                                "active" -> "Active"
+                                "maintenance" -> "Maintenance"
+                                "inactive" -> "Inactive"
+                                else -> "Retired"
+                            }
+
+                            RegistryFilterChip(
+                                label = label,
+                                selected = selectedStatus == status,
+                                onClick = { selectedStatus = status }
+                            )
+                        }
+                    }
                 }
             }
         }
 
-        Spacer(Modifier.height(16.dp))
-
-        Text(
-            "FILTER BY STATUS",
-            color = AssetMuted,
-            fontSize = 10.sp,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 1.5.sp
-        )
-
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(12.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            AssetStatuses.forEach { status ->
-
-                val selected = selectedStatus == status
-
-                FilterChip(
-                    selected = selected,
-                    onClick = { selectedStatus = status },
-                    label = {
-                        Text(
-                            when (status) {
-                                "All" -> "All"
-                                "active" -> "Active"
-                                "maintenance" -> "Repair"
-                                "inactive" -> "Inactive"
-                                else -> "Retired"
-                            },
-                            fontSize = 10.sp,
-                            maxLines = 1
-                        )
-                    },
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = AssetAccent,
-                        selectedLabelColor = Color.White,
-                        containerColor = AssetCard,
-                        labelColor = AssetMuted
-                    )
+            Column {
+                Text(
+                    text = "${filteredAssets.size} assets",
+                    color = AssetWhite,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold
                 )
+
+                Text(
+                    text = "Matching your filters",
+                    color = AssetMuted,
+                    fontSize = 11.sp
+                )
+            }
+
+            ExposedDropdownMenuBox(
+                expanded = sortMenuExpanded,
+                onExpandedChange = { sortMenuExpanded = it }
+            ) {
+                TextButton(
+                    onClick = { sortMenuExpanded = true },
+                    modifier = Modifier.menuAnchor()
+                ) {
+                    Text(
+                        text = "Sort",
+                        color = AssetPurple,
+                        fontSize = 12.sp
+                    )
+                    ExposedDropdownMenuDefaults.TrailingIcon(
+                        expanded = sortMenuExpanded
+                    )
+                }
+
+                ExposedDropdownMenu(
+                    expanded = sortMenuExpanded,
+                    onDismissRequest = { sortMenuExpanded = false }
+                ) {
+                    AssetSortOptions.forEach { option ->
+                        DropdownMenuItem(
+                            text = { Text(option) },
+                            onClick = {
+                                selectedSort = option
+                                sortMenuExpanded = false
+                            }
+                        )
+                    }
+                }
             }
         }
 
-        Spacer(Modifier.height(14.dp))
-
-        Text(
-            "${filteredAssets.size} asset(s) found",
-            color = AssetMuted,
-            fontSize = 12.sp
-        )
-
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(8.dp))
 
         when {
             loading -> {
                 Box(
-                    Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 24.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(color = AssetAccent)
+                    CircularProgressIndicator(color = AssetPurple)
                 }
             }
 
             error != null -> {
                 Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
                     Text(
                         "Unable to load assets",
-                        color = Color(0xFFEF4444),
+                        color = Color(0xFFFF8295),
                         fontWeight = FontWeight.Bold
                     )
 
@@ -335,25 +354,25 @@ fun AssetRegistryScreen(
                     )
 
                     TextButton(onClick = onRefresh) {
-                        Text("Try again")
+                        Text("Try again", color = AssetPurple)
                     }
                 }
             }
 
             filteredAssets.isEmpty() -> {
                 Box(
-                    Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
                     contentAlignment = Alignment.Center
                 ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text("▦", color = AssetAccent, fontSize = 42.sp)
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("▦", color = AssetPurple, fontSize = 42.sp)
 
                         Spacer(Modifier.height(10.dp))
 
                         Text(
-                            if (assets.isEmpty()) {
+                            text = if (assets.isEmpty()) {
                                 "No assets registered yet"
                             } else {
                                 "No matching assets found"
@@ -365,7 +384,7 @@ fun AssetRegistryScreen(
                         Spacer(Modifier.height(5.dp))
 
                         Text(
-                            "Try changing your search or filter.",
+                            "Try changing your search or filters.",
                             color = AssetMuted,
                             fontSize = 12.sp
                         )
@@ -374,20 +393,16 @@ fun AssetRegistryScreen(
             }
 
             else -> {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    contentPadding = PaddingValues(bottom = 20.dp)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    items(
-                        items = sortedAssets,
-                        key = { it.id }
-                    ) { asset ->
-
+                    sortedAssets.forEach { asset ->
                         AssetCardItem(
                             asset = asset,
-                            onClick = {
-                                onAssetSelected(asset)
-                            }
+                            onClick = { onAssetSelected(asset) }
                         )
                     }
                 }
@@ -397,15 +412,48 @@ fun AssetRegistryScreen(
 }
 
 @Composable
+private fun RegistryFilterChip(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    FilterChip(
+        selected = selected,
+        onClick = onClick,
+        label = {
+            Text(
+                text = label,
+                fontSize = 11.sp,
+                maxLines = 1
+            )
+        },
+        shape = RoundedCornerShape(10.dp),
+        colors = FilterChipDefaults.filterChipColors(
+            selectedContainerColor = AssetPurple,
+            selectedLabelColor = Color.White,
+            containerColor = AssetCard,
+            labelColor = AssetMuted
+        )
+    )
+}
+
+@Composable
 private fun AssetCardItem(
     asset: AssetData,
     onClick: () -> Unit
 ) {
     val statusColor = when (asset.status.lowercase()) {
-        "active" -> Color(0xFF22C55E)
-        "maintenance" -> Color(0xFFF59E0B)
-        "inactive" -> Color(0xFF94A3B8)
-        "retired" -> Color(0xFFEF4444)
+        "active" -> Color(0xFF65D6B0)
+        "maintenance" -> Color(0xFFFFC66D)
+        "inactive" -> Color(0xFFA8B2D1)
+        "retired" -> Color(0xFFFF8295)
+        else -> AssetMuted
+    }
+
+    val conditionColor = when (asset.condition.lowercase()) {
+        "new", "good" -> Color(0xFF65D6B0)
+        "fair" -> Color(0xFFFFC66D)
+        "poor", "damaged" -> Color(0xFFFF8295)
         else -> AssetMuted
     }
 
@@ -413,69 +461,86 @@ private fun AssetCardItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() },
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = AssetCard
-        )
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = AssetPanel)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            modifier = Modifier.padding(15.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                Surface(
+                    modifier = Modifier.size(42.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color(0xFF29234F)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(
+                            text = "▦",
+                            color = AssetPurple,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+
                 Column(
                     modifier = Modifier.weight(1f)
                 ) {
                     Text(
-                        asset.name,
+                        text = asset.name,
                         color = AssetWhite,
-                        fontSize = 15.sp,
+                        fontSize = 14.sp,
                         fontWeight = FontWeight.Bold
                     )
 
-                    Spacer(Modifier.height(4.dp))
+                    Spacer(Modifier.height(3.dp))
 
                     Text(
-                        asset.assetCode,
-                        color = AssetAccent,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium
+                        text = asset.assetCode,
+                        color = AssetMuted,
+                        fontSize = 11.sp
                     )
                 }
 
                 Surface(
-                    color = statusColor.copy(alpha = 0.15f),
+                    color = statusColor.copy(alpha = 0.14f),
                     shape = RoundedCornerShape(8.dp)
                 ) {
                     Text(
-                        asset.status.uppercase(),
+                        text = asset.status.replaceFirstChar { it.uppercase() },
                         modifier = Modifier.padding(
                             horizontal = 9.dp,
                             vertical = 6.dp
                         ),
                         color = statusColor,
-                        fontSize = 9.sp,
+                        fontSize = 10.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }
             }
 
-            HorizontalDivider(color = Color(0xFF28354A))
+            HorizontalDivider(color = Color(0xFF303858))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         "CATEGORY",
                         color = AssetMuted,
-                        fontSize = 9.sp
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
                     )
+
+                    Spacer(Modifier.height(4.dp))
 
                     Text(
                         asset.category,
@@ -484,34 +549,46 @@ private fun AssetCardItem(
                     )
                 }
 
-                Column(
-                    horizontalAlignment = Alignment.End
-                ) {
+                Column(horizontalAlignment = Alignment.End) {
                     Text(
                         "CONDITION",
                         color = AssetMuted,
-                        fontSize = 9.sp
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
                     )
 
-                    Text(
-                        asset.condition.replaceFirstChar {
-                            it.uppercase()
-                        },
-                        color = if (asset.condition == "damaged") {
-                            Color(0xFFEF4444)
-                        } else {
-                            AssetWhite
-                        },
-                        fontSize = 12.sp
-                    )
+                    Spacer(Modifier.height(4.dp))
+
+                    Surface(
+                        color = conditionColor.copy(alpha = 0.13f),
+                        shape = RoundedCornerShape(7.dp)
+                    ) {
+                        Text(
+                            text = asset.condition.replaceFirstChar { it.uppercase() },
+                            modifier = Modifier.padding(
+                                horizontal = 9.dp,
+                                vertical = 5.dp
+                            ),
+                            color = conditionColor,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
                 }
             }
 
-            Text(
-                "View asset details  →",
-                color = AssetAccent,
-                fontSize = 11.sp
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                Text(
+                    "View details  →",
+                    color = AssetPurple,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
         }
     }
 }
