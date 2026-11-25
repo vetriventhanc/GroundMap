@@ -945,45 +945,44 @@ fun DashboardScreen(
     onRefresh: () -> Unit,
     onNavigate: (Int) -> Unit
 ) {
-    val operational = assets.count {
-        it.status == "active"
-    }
-
-    val maintenance = assets.count {
-        it.status == "maintenance"
-    }
-
-    val damaged = assets.count {
-        it.condition == "damaged"
-    }
+    val operational = assets.count { it.status == "active" }
+    val maintenance = assets.count { it.status == "maintenance" }
+    val damaged = assets.count { it.condition == "damaged" }
 
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
             .background(Background),
-        contentPadding = PaddingValues(20.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+        contentPadding = PaddingValues(
+            start = 20.dp,
+            top = 24.dp,
+            end = 20.dp,
+            bottom = 24.dp
+        ),
+        verticalArrangement = Arrangement.spacedBy(22.dp)
     ) {
         item {
             Column {
                 Text(
-                    "GROUNDMAP",
+                    "GROUNDMAP  /  OVERVIEW",
                     color = Accent,
-                    fontSize = 12.sp,
+                    fontSize = 11.sp,
                     fontWeight = FontWeight.Bold
                 )
 
-                Spacer(Modifier.height(7.dp))
+                Spacer(Modifier.height(8.dp))
 
                 Text(
-                    "Good day!",
+                    "Your operations",
                     color = White,
-                    fontSize = 27.sp,
+                    fontSize = 28.sp,
                     fontWeight = FontWeight.Bold
                 )
 
+                Spacer(Modifier.height(4.dp))
+
                 Text(
-                    "Your physical world, organized.",
+                    "A clear view of your physical assets.",
                     color = Muted,
                     fontSize = 13.sp
                 )
@@ -992,16 +991,22 @@ fun DashboardScreen(
 
         item {
             Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(22.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFF172B49)
-                ),
-                shape = RoundedCornerShape(18.dp)
+                    containerColor = Color(0xFF202D50)
+                )
             ) {
-                Column(Modifier.padding(20.dp)) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp)
+                ) {
                     Text(
                         "CURRENT WORKSPACE",
-                        color = Color(0xFF93C5FD),
-                        fontSize = 10.sp
+                        color = Color(0xFFB8C5FF),
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold
                     )
 
                     Spacer(Modifier.height(10.dp))
@@ -1009,135 +1014,179 @@ fun DashboardScreen(
                     Text(
                         workspaceName,
                         color = White,
-                        fontSize = 20.sp,
+                        fontSize = 21.sp,
                         fontWeight = FontWeight.Bold
                     )
 
+                    Spacer(Modifier.height(5.dp))
+
                     Text(
                         "Connected to GroundMap API",
-                        color = Color(0xFFCBD5E1),
+                        color = Color(0xFFD0D8F0),
                         fontSize = 12.sp
                     )
+
+                    Spacer(Modifier.height(12.dp))
 
                     TextButton(
                         onClick = { onNavigate(4) }
                     ) {
-                        Text("Switch workspace")
+                        Text(
+                            "Switch workspace  →",
+                            color = Color(0xFFB8C5FF)
+                        )
                     }
                 }
             }
         }
 
         item {
-            SectionTitle("Asset Overview")
+            Column {
+                SectionTitle("Asset Overview")
 
-            Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(12.dp))
 
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                StatCard(
-                    "Total Assets",
-                    assets.size.toString(),
-                    "▦",
-                    Accent,
-                    Modifier.weight(1f)
-                )
-
-                StatCard(
-                    "Operational",
-                    operational.toString(),
-                    "✓",
-                    Green,
-                    Modifier.weight(1f)
-                )
-            }
-
-            Spacer(Modifier.height(12.dp))
-
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                StatCard(
-                    "Maintenance",
-                    maintenance.toString(),
-                    "⚙",
-                    Orange,
-                    Modifier.weight(1f)
-                )
-
-                StatCard(
-                    "Damaged",
-                    damaged.toString(),
-                    "!",
-                    Red,
-                    Modifier.weight(1f)
-                )
-            }
-        }
-
-        item {
-            when {
-                loading -> Text(
-                    "Synchronizing...",
-                    color = Muted
-                )
-
-                error != null -> Text(
-                    "API error: $error",
-                    color = Red,
-                    fontSize = 12.sp
-                )
-
-                else -> Text(
-                    "Live data from GroundMap API",
-                    color = Green,
-                    fontSize = 12.sp
-                )
-            }
-
-            TextButton(onClick = onRefresh) {
-                Text("Refresh dashboard")
-            }
-        }
-
-        item {
-            SectionTitle("Quick Actions")
-
-            Spacer(Modifier.height(12.dp))
-
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                ActionCard(
-                    "View Assets",
-                    "Browse equipment",
-                    "▦",
-                    Modifier.weight(1f)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    onNavigate(1)
+                    StatCard(
+                        title = "Total Assets",
+                        value = assets.size.toString(),
+                        symbol = "▦",
+                        color = Accent,
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    StatCard(
+                        title = "Operational",
+                        value = operational.toString(),
+                        symbol = "✓",
+                        color = Green,
+                        modifier = Modifier.weight(1f)
+                    )
                 }
 
-                ActionCard(
-                    "Register Asset",
-                    "Add new equipment",
-                    "+",
-                    Modifier.weight(1f)
+                Spacer(Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    onNavigate(5)
+                    StatCard(
+                        title = "Maintenance",
+                        value = maintenance.toString(),
+                        symbol = "⚙",
+                        color = Orange,
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    StatCard(
+                        title = "Damaged",
+                        value = damaged.toString(),
+                        symbol = "!",
+                        color = Red,
+                        modifier = Modifier.weight(1f)
+                    )
                 }
             }
         }
 
         item {
-            SectionTitle("Recent Activity")
-
-            Spacer(Modifier.height(12.dp))
-
             Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = CardColor
                 )
             ) {
-                Text(
-                    "Activity history will appear here.",
-                    color = Muted,
-                    modifier = Modifier.padding(18.dp)
-                )
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 14.dp)
+                ) {
+                    Text(
+                        when {
+                            loading -> "Synchronizing with GroundMap..."
+                            error != null -> "Dashboard connection issue"
+                            else -> "Dashboard is up to date"
+                        },
+                        color = when {
+                            loading -> Muted
+                            error != null -> Red
+                            else -> Green
+                        },
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+
+                    if (error != null) {
+                        Spacer(Modifier.height(6.dp))
+                        Text(
+                            "API error: $error",
+                            color = Red,
+                            fontSize = 12.sp
+                        )
+                    }
+
+                    TextButton(onClick = onRefresh) {
+                        Text("Refresh data", color = Accent)
+                    }
+                }
+            }
+        }
+
+        item {
+            Column {
+                SectionTitle("Quick Actions")
+
+                Spacer(Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    ActionCard(
+                        title = "View Assets",
+                        description = "Browse equipment",
+                        symbol = "▦",
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        onNavigate(1)
+                    }
+
+                    ActionCard(
+                        title = "Register Asset",
+                        description = "Add equipment",
+                        symbol = "+",
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        onNavigate(5)
+                    }
+                }
+            }
+        }
+
+        item {
+            Column {
+                SectionTitle("Recent Activity")
+
+                Spacer(Modifier.height(12.dp))
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = CardColor
+                    )
+                ) {
+                    Text(
+                        "Activity history will appear here.",
+                        color = Muted,
+                        fontSize = 13.sp,
+                        modifier = Modifier.padding(18.dp)
+                    )
+                }
             }
         }
     }
