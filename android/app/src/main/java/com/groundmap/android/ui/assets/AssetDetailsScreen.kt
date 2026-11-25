@@ -14,6 +14,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.groundmap.android.data.remote.AssetData
+import com.groundmap.android.data.remote.RoomLocationData
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
 import androidx.compose.ui.graphics.asImageBitmap
@@ -43,6 +44,10 @@ fun AssetDetailsScreen(
     qrLoading: Boolean,
     qrError: String?,
     onRefreshQr: () -> Unit,
+    rooms: List<RoomLocationData>,
+    locationSaving: Boolean,
+    locationError: String?,
+    onUpdateLocation: (String?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var selectedStatus by remember(asset.id, asset.status) {
@@ -51,6 +56,11 @@ fun AssetDetailsScreen(
 
     var selectedCondition by remember(asset.id, asset.condition) {
         mutableStateOf(asset.condition)
+    }
+
+    var roomMenu by remember { mutableStateOf(false) }
+    var selectedRoomId by remember(asset.id, asset.roomId) {
+        mutableStateOf(asset.roomId)
     }
 
     var statusMenu by remember { mutableStateOf(false) }
@@ -373,7 +383,80 @@ fun AssetDetailsScreen(
 
         DetailCardSection("Location Information") {
             DetailValue("Workspace ID", asset.workspaceId)
-            DetailValue("Room ID", asset.roomId)
+
+            val selectedRoom = rooms.firstOrNull {
+                it.id == selectedRoomId
+            }
+
+            ExposedDropdownMenuBox(
+                expanded = roomMenu,
+                onExpandedChange = { roomMenu = it }
+            ) {
+                OutlinedTextField(
+                    value = selectedRoom?.name ?: "Unassigned",
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Room") },
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(
+                            expanded = roomMenu
+                        )
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .menuAnchor(),
+                    colors = detailFieldColors()
+                )
+
+                ExposedDropdownMenu(
+                    expanded = roomMenu,
+                    onDismissRequest = { roomMenu = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Unassigned") },
+                        onClick = {
+                            selectedRoomId = null
+                            roomMenu = false
+                        }
+                    )
+
+                    rooms.forEach { room ->
+                        DropdownMenuItem(
+                            text = { Text(room.name) },
+                            onClick = {
+                                selectedRoomId = room.id
+                                roomMenu = false
+                            }
+                        )
+                    }
+                }
+            }
+
+            if (locationError != null) {
+                Text(
+                    locationError,
+                    color = DetailRed,
+                    fontSize = 12.sp
+                )
+            }
+
+            Button(
+                onClick = { onUpdateLocation(selectedRoomId) },
+                enabled = !locationSaving && selectedRoomId != asset.roomId,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = DetailAccent
+                )
+            ) {
+                if (locationSaving) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        color = DetailWhite
+                    )
+                } else {
+                    Text("Save Location")
+                }
+            }
         }
 
         DetailCardSection("Purchase Information") {

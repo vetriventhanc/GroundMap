@@ -73,6 +73,12 @@ fun GroundMapApp() {
         mutableStateOf<List<AssetData>>(emptyList())
     }
 
+    var locationRooms by remember {
+        mutableStateOf<List<RoomLocationData>>(emptyList())
+    }
+    var locationSaving by remember { mutableStateOf(false) }
+    var locationError by remember { mutableStateOf<String?>(null) }
+
     var workspaceLoading by remember { mutableStateOf(false) }
     var assetLoading by remember { mutableStateOf(false) }
     var registrationSaving by remember { mutableStateOf(false) }
@@ -154,6 +160,45 @@ fun GroundMapApp() {
                 }
             }
         }.start()
+
+        onDispose {
+            cancelled.set(true)
+        }
+    }
+
+    DisposableEffect(selectedWorkspace?.id) {
+        val workspaceId = selectedWorkspace?.id
+        val cancelled = AtomicBoolean(false)
+
+        if (workspaceId == null) {
+            locationRooms = emptyList()
+        } else {
+            Thread {
+                try {
+                    val tree = GroundMapApi.loadLocationTree(workspaceId)
+
+                    val rooms = tree.sites.flatMap { site ->
+                        site.buildings.flatMap { building ->
+                            building.floors.flatMap { floor ->
+                                floor.rooms
+                            }
+                        }
+                    }
+
+                    Handler(Looper.getMainLooper()).post {
+                        if (!cancelled.get()) {
+                            locationRooms = rooms
+                        }
+                    }
+                } catch (e: Exception) {
+                    Handler(Looper.getMainLooper()).post {
+                        if (!cancelled.get()) {
+                            locationRooms = emptyList()
+                        }
+                    }
+                }
+            }.start()
+        }
 
         onDispose {
             cancelled.set(true)
@@ -327,6 +372,34 @@ fun GroundMapApp() {
                 Handler(Looper.getMainLooper()).post {
                     conditionSaving = false
                     conditionError = e.message ?: "Unable to update condition."
+                }
+            }
+        }.start()
+    }
+
+    fun updateAssetLocation(roomId: String?) {
+        val assetId = selectedAsset?.id ?: return
+
+        locationSaving = true
+        locationError = null
+
+        Thread {
+            try {
+                val updatedAsset = GroundMapApi.updateAssetLocation(
+                    assetId = assetId,
+                    roomId = roomId
+                )
+
+                Handler(Looper.getMainLooper()).post {
+                    selectedAsset = updatedAsset
+                    locationSaving = false
+                    locationError = null
+                    assetRefresh++
+                }
+            } catch (e: Exception) {
+                Handler(Looper.getMainLooper()).post {
+                    locationSaving = false
+                    locationError = e.message ?: "Unable to update asset location."
                 }
             }
         }.start()
@@ -681,6 +754,12 @@ fun GroundMapApp() {
                             conditionSaving = conditionSaving,
                             statusError = statusError,
                             conditionError = conditionError,
+                            rooms = locationRooms,
+                            locationSaving = locationSaving,
+                            locationError = locationError,
+                            onUpdateLocation = { roomId ->
+                                updateAssetLocation(roomId)
+                            },
                             modifier = Modifier.padding(padding)
 
 

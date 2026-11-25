@@ -60,6 +60,39 @@ data class FaultReportData(
     val updatedAt: String
 )
 
+data class RoomLocationData(
+    val id: String,
+    val name: String,
+    val description: String?
+)
+
+data class FloorLocationData(
+    val id: String,
+    val name: String,
+    val floorNumber: Int?,
+    val rooms: List<RoomLocationData>
+)
+
+data class BuildingLocationData(
+    val id: String,
+    val name: String,
+    val description: String?,
+    val floors: List<FloorLocationData>
+)
+
+data class SiteLocationData(
+    val id: String,
+    val name: String,
+    val address: String?,
+    val buildings: List<BuildingLocationData>
+)
+
+data class WorkspaceLocationTreeData(
+    val id: String,
+    val name: String,
+    val description: String?,
+    val sites: List<SiteLocationData>
+)
 
 object GroundMapApi {
 
@@ -178,6 +211,133 @@ object GroundMapApi {
                 add(parseAsset(response.getJSONObject(i)))
             }
         }
+    }
+
+    // LOCATION TREE
+
+    fun loadLocationTree(workspaceId: String): WorkspaceLocationTreeData {
+        val rawResponse = request(
+            "/api/v1/locations/tree?workspace_id=$workspaceId"
+        ).trim()
+
+        val workspace = when {
+            rawResponse.startsWith("[") -> {
+                val items = JSONArray(rawResponse)
+                if (items.length() == 0) {
+                    throw Exception("Location tree returned no workspaces.")
+                }
+                items.getJSONObject(0)
+            }
+
+            else -> {
+                val response = JSONObject(rawResponse)
+                val items = response.optJSONArray("value")
+
+                if (items != null) {
+                    if (items.length() == 0) {
+                        throw Exception("Location tree returned no workspaces.")
+                    }
+                    items.getJSONObject(0)
+                } else {
+                    response
+                }
+            }
+        }
+
+        val sitesJson = workspace.optJSONArray("sites") ?: JSONArray()
+
+        val sites = buildList {
+            for (siteIndex in 0 until sitesJson.length()) {
+                val site = sitesJson.getJSONObject(siteIndex)
+                val buildingsJson = site.optJSONArray("buildings") ?: JSONArray()
+
+                val buildings = buildList {
+                    for (buildingIndex in 0 until buildingsJson.length()) {
+                        val building = buildingsJson.getJSONObject(buildingIndex)
+                        val floorsJson = building.optJSONArray("floors") ?: JSONArray()
+
+                        val floors = buildList {
+                            for (floorIndex in 0 until floorsJson.length()) {
+                                val floor = floorsJson.getJSONObject(floorIndex)
+                                val roomsJson = floor.optJSONArray("rooms") ?: JSONArray()
+
+                                val rooms = buildList {
+                                    for (roomIndex in 0 until roomsJson.length()) {
+                                        val room = roomsJson.getJSONObject(roomIndex)
+                                        add(
+                                            RoomLocationData(
+                                                id = room.getString("id"),
+                                                name = room.getString("name"),
+                                                description = room.optionalString("description")
+                                            )
+                                        )
+                                    }
+                                }
+
+                                add(
+                                    FloorLocationData(
+                                        id = floor.getString("id"),
+                                        name = floor.getString("name"),
+                                        floorNumber = if (floor.isNull("floor_number")) {
+                                            null
+                                        } else {
+                                            floor.optInt("floor_number")
+                                        },
+                                        rooms = rooms
+                                    )
+                                )
+                            }
+                        }
+
+                        add(
+                            BuildingLocationData(
+                                id = building.getString("id"),
+                                name = building.getString("name"),
+                                description = building.optionalString("description"),
+                                floors = floors
+                            )
+                        )
+                    }
+                }
+
+                add(
+                    SiteLocationData(
+                        id = site.getString("id"),
+                        name = site.getString("name"),
+                        address = site.optionalString("address"),
+                        buildings = buildings
+                    )
+                )
+            }
+        }
+
+        return WorkspaceLocationTreeData(
+            id = workspace.getString("id"),
+            name = workspace.getString("name"),
+            description = workspace.optionalString("description"),
+            sites = sites
+        )
+    }
+
+    // ASSIGN ASSET LOCATION
+
+    fun updateAssetLocation(
+        assetId: String,
+        roomId: String?
+    ): AssetData {
+        val body = JSONObject().apply {
+            put("room_id", nullableJsonValue(roomId))
+        }
+
+        return parseAsset(
+            JSONObject(
+                request(
+                    "/api/v1/assets/$assetId/location",
+                    "PATCH",
+                    body
+                )
+            )
+        )
     }
 
     // SINGLE ASSET
