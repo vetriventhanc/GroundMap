@@ -114,11 +114,14 @@ cd GroundMap
 
 ### 3. Configure the Backend
 
-GroundMap uses a backend API for workspace, asset, and activity data.
+GroundMap’s backend uses FastAPI and connects to a PostgreSQL database through SQLAlchemy.
 
-Set the API base URL to the address appropriate for your environment.
+1. Navigate to the backend directory.
+2. Create a `.env` file in that directory.
+3. Add your PostgreSQL connection string:
 
-> **Note:** Add the exact configuration file or location and backend startup instructions here before publishing this README.
+   ```env
+   DATABASE_URL=postgresql+psycopg://USERNAME:PASSWORD@HOST:PORT/DATABASE_NAME
 
 ### 4. Run the App
 
