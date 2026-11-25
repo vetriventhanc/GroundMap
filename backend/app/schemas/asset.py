@@ -15,7 +15,7 @@ AssetStatus = Literal[
 ]
 
 AssetCondition = Literal[
-    "excellent",
+    "new",
     "good",
     "fair",
     "poor",

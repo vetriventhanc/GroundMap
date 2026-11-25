@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -33,13 +34,23 @@ private val AssetStatuses = listOf(
 
 private val AssetConditions = listOf(
     "All",
-    "excellent",
+    "new",
     "good",
     "fair",
     "poor",
     "damaged"
 )
 
+private val AssetSortOptions = listOf(
+    "Name (A–Z)",
+    "Name (Z–A)",
+    "Asset Code",
+    "Condition",
+    "Status"
+)
+
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AssetRegistryScreen(
     assets: List<AssetData>,
@@ -52,6 +63,9 @@ fun AssetRegistryScreen(
     var searchQuery by remember { mutableStateOf("") }
     var selectedStatus by remember { mutableStateOf("All") }
     var selectedCondition by remember { mutableStateOf("All") }
+
+    var selectedSort by remember { mutableStateOf("Name (A–Z)") }
+    var sortMenuExpanded by remember { mutableStateOf(false) }
 
     val filteredAssets = remember(
         assets,
@@ -78,6 +92,16 @@ fun AssetRegistryScreen(
                         asset.condition.equals(selectedCondition, ignoreCase = true)
 
             matchesSearch && matchesStatus && matchesCondition
+        }
+    }
+
+    val sortedAssets = remember(filteredAssets, selectedSort) {
+        when (selectedSort) {
+            "Name (Z–A)" -> filteredAssets.sortedByDescending { it.name.lowercase() }
+            "Asset Code" -> filteredAssets.sortedBy { it.assetCode.lowercase() }
+            "Condition" -> filteredAssets.sortedBy { it.condition.lowercase() }
+            "Status" -> filteredAssets.sortedBy { it.status.lowercase() }
+            else -> filteredAssets.sortedBy { it.name.lowercase() }
         }
     }
 
@@ -181,6 +205,49 @@ fun AssetRegistryScreen(
                 unfocusedContainerColor = AssetCard
             )
         )
+
+        ExposedDropdownMenuBox(
+            expanded = sortMenuExpanded,
+            onExpandedChange = { sortMenuExpanded = it },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            OutlinedTextField(
+                value = selectedSort,
+                onValueChange = {},
+                readOnly = true,
+                label = { Text("Sort by", color = AssetMuted) },
+                trailingIcon = {
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = sortMenuExpanded)
+                },
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth(),
+                shape = RoundedCornerShape(14.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = AssetWhite,
+                    unfocusedTextColor = AssetWhite,
+                    focusedBorderColor = AssetAccent,
+                    unfocusedBorderColor = Color(0xFF334155),
+                    focusedContainerColor = AssetCard,
+                    unfocusedContainerColor = AssetCard
+                )
+            )
+
+            ExposedDropdownMenu(
+                expanded = sortMenuExpanded,
+                onDismissRequest = { sortMenuExpanded = false }
+            ) {
+                AssetSortOptions.forEach { option ->
+                    DropdownMenuItem(
+                        text = { Text(option) },
+                        onClick = {
+                            selectedSort = option
+                            sortMenuExpanded = false
+                        }
+                    )
+                }
+            }
+        }
 
         Spacer(Modifier.height(16.dp))
 
@@ -312,7 +379,7 @@ fun AssetRegistryScreen(
                     contentPadding = PaddingValues(bottom = 20.dp)
                 ) {
                     items(
-                        items = filteredAssets,
+                        items = sortedAssets,
                         key = { it.id }
                     ) { asset ->
 
