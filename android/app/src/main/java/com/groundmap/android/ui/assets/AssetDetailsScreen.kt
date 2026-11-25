@@ -1,6 +1,7 @@
-
 package com.groundmap.android.ui.assets
 
+import android.graphics.BitmapFactory
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -8,24 +9,25 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.groundmap.android.data.remote.AssetData
 import com.groundmap.android.data.remote.RoomLocationData
-import android.graphics.BitmapFactory
-import androidx.compose.foundation.Image
-import androidx.compose.ui.graphics.asImageBitmap
 
-private val DetailBackground = Color(0xFF0B1120)
-private val DetailCard = Color(0xFF151F32)
+private val DetailBackground = Color(0xFF0B1024)
+private val DetailCard = Color(0xFF171D38)
+private val DetailCardInner = Color(0xFF202747)
 private val DetailWhite = Color(0xFFF8FAFC)
-private val DetailMuted = Color(0xFF94A3B8)
-private val DetailAccent = Color(0xFF3B82F6)
-private val DetailGreen = Color(0xFF22C55E)
-private val DetailRed = Color(0xFFEF4444)
+private val DetailMuted = Color(0xFFA8B2D1)
+private val DetailAccent = Color(0xFF8B5CF6)
+private val DetailGreen = Color(0xFF65D6B0)
+private val DetailAmber = Color(0xFFFFC66D)
+private val DetailRed = Color(0xFFFF8295)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,42 +55,38 @@ fun AssetDetailsScreen(
     var selectedStatus by remember(asset.id, asset.status) {
         mutableStateOf(asset.status)
     }
-
     var selectedCondition by remember(asset.id, asset.condition) {
         mutableStateOf(asset.condition)
     }
-
-    var roomMenu by remember { mutableStateOf(false) }
     var selectedRoomId by remember(asset.id, asset.roomId) {
         mutableStateOf(asset.roomId)
     }
 
     var statusMenu by remember { mutableStateOf(false) }
     var conditionMenu by remember { mutableStateOf(false) }
+    var roomMenu by remember { mutableStateOf(false) }
 
-    val statuses = listOf(
-        "active",
-        "maintenance",
-        "inactive",
-        "retired"
-    )
-
-    val conditions = listOf(
-        "excellent",
-        "good",
-        "fair",
-        "poor",
-        "damaged"
-    )
+    val statuses = listOf("active", "maintenance", "inactive", "retired")
+    val conditions = listOf("excellent", "good", "fair", "poor", "damaged")
 
     val qrBitmap = remember(qrImageBytes) {
         qrImageBytes?.let { bytes ->
-            BitmapFactory.decodeByteArray(
-                bytes,
-                0,
-                bytes.size
-            )?.asImageBitmap()
+            BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()
         }
+    }
+
+    val statusColor = when (asset.status.lowercase()) {
+        "active" -> DetailGreen
+        "maintenance" -> DetailAmber
+        "inactive", "retired" -> DetailRed
+        else -> DetailMuted
+    }
+
+    val conditionColor = when (asset.condition.lowercase()) {
+        "excellent", "good", "new" -> DetailGreen
+        "fair" -> DetailAmber
+        "poor", "damaged" -> DetailRed
+        else -> DetailMuted
     }
 
     Column(
@@ -96,64 +94,72 @@ fun AssetDetailsScreen(
             .fillMaxSize()
             .background(DetailBackground)
             .verticalScroll(rememberScrollState())
-            .padding(20.dp),
+            .padding(horizontal = 18.dp, vertical = 14.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        TextButton(onClick = onBack) {
-            Text("← Back to Assets", color = DetailAccent)
+        TextButton(
+            onClick = onBack,
+            contentPadding = PaddingValues(horizontal = 0.dp, vertical = 4.dp)
+        ) {
+            Text("← Back to Assets", color = DetailAccent, fontSize = 13.sp)
         }
 
-        Text(
-            "ASSET DETAILS",
-            color = DetailAccent,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold
-        )
-
-        Text(
-            asset.name,
-            color = DetailWhite,
-            fontSize = 27.sp,
-            fontWeight = FontWeight.Bold
-        )
-
-        Text(
-            asset.assetCode,
-            color = DetailMuted,
-            fontSize = 14.sp
-        )
-
-        // ASSET QR CODE
-
-        DetailCardSection("Asset QR Code") {
-
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
-                "Scan this code to identify this asset.",
-                color = DetailMuted,
-                fontSize = 12.sp
+                "ASSET DETAILS",
+                color = DetailAccent,
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.8.sp
             )
 
+            Text(
+                asset.name,
+                color = DetailWhite,
+                fontSize = 25.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Text(
+                asset.assetCode,
+                color = DetailMuted,
+                fontSize = 13.sp
+            )
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                DetailTag(
+                    text = asset.status.replaceFirstChar { it.uppercase() },
+                    color = statusColor
+                )
+                DetailTag(
+                    text = asset.condition.replaceFirstChar { it.uppercase() },
+                    color = conditionColor
+                )
+            }
+        }
+
+        // QR CODE
+        DetailCardSection(
+            title = "Asset QR Code",
+            subtitle = "Scan this code to identify the asset."
+        ) {
             when {
                 qrLoading -> {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(190.dp),
-                        contentAlignment = androidx.compose.ui.Alignment.Center
+                            .height(210.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator(
-                            color = DetailAccent
-                        )
+                        CircularProgressIndicator(color = DetailAccent)
                     }
                 }
 
                 qrError != null -> {
-                    Text(
-                        qrError,
-                        color = DetailRed,
-                        fontSize = 12.sp
-                    )
-
+                    Text(qrError, color = DetailRed, fontSize = 12.sp)
                     OutlinedButton(
                         onClick = onRefreshQr,
                         modifier = Modifier.fillMaxWidth()
@@ -165,19 +171,17 @@ fun AssetDetailsScreen(
                 qrBitmap != null -> {
                     Box(
                         modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = androidx.compose.ui.Alignment.Center
+                        contentAlignment = Alignment.Center
                     ) {
-                        Card(
-                            colors = CardDefaults.cardColors(
-                                containerColor = Color.White
-                            ),
-                            shape = RoundedCornerShape(12.dp)
+                        Surface(
+                            shape = RoundedCornerShape(18.dp),
+                            color = Color.White
                         ) {
                             Image(
                                 bitmap = qrBitmap,
                                 contentDescription = "QR code for ${asset.assetCode}",
                                 modifier = Modifier
-                                    .size(220.dp)
+                                    .size(210.dp)
                                     .padding(10.dp)
                             )
                         }
@@ -186,14 +190,19 @@ fun AssetDetailsScreen(
                     Text(
                         asset.assetCode,
                         color = DetailWhite,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.fillMaxWidth()
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold
                     )
 
                     OutlinedButton(
                         onClick = onRefreshQr,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(46.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = DetailMuted
+                        )
                     ) {
                         Text("Refresh QR Code")
                     }
@@ -205,7 +214,6 @@ fun AssetDetailsScreen(
                         color = DetailMuted,
                         fontSize = 12.sp
                     )
-
                     OutlinedButton(
                         onClick = onRefreshQr,
                         modifier = Modifier.fillMaxWidth()
@@ -216,42 +224,38 @@ fun AssetDetailsScreen(
             }
         }
 
-        // STATUS MANAGEMENT
-
-        DetailCardSection("Operational Status") {
-
+        // OPERATIONAL STATUS
+        DetailCardSection(
+            title = "Operational Status",
+            subtitle = "Update the current operating state."
+        ) {
             ExposedDropdownMenuBox(
                 expanded = statusMenu,
                 onExpandedChange = { statusMenu = it }
             ) {
                 OutlinedTextField(
-                    value = selectedStatus,
+                    value = selectedStatus.replaceFirstChar { it.uppercase() },
                     onValueChange = {},
                     readOnly = true,
                     label = { Text("Asset status") },
                     trailingIcon = {
-                        ExposedDropdownMenuDefaults.TrailingIcon(
-                            expanded = statusMenu
-                        )
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = statusMenu)
                     },
                     modifier = Modifier
                         .fillMaxWidth()
                         .menuAnchor(),
+                    shape = RoundedCornerShape(14.dp),
                     colors = detailFieldColors()
                 )
 
                 ExposedDropdownMenu(
                     expanded = statusMenu,
-                    onDismissRequest = {
-                        statusMenu = false
-                    }
+                    onDismissRequest = { statusMenu = false }
                 ) {
                     statuses.forEach { status ->
                         DropdownMenuItem(
                             text = {
-                                Text(status.replaceFirstChar {
-                                    it.uppercase()
-                                })
+                                Text(status.replaceFirstChar { it.uppercase() })
                             },
                             onClick = {
                                 selectedStatus = status
@@ -263,29 +267,28 @@ fun AssetDetailsScreen(
             }
 
             if (statusError != null) {
-                Text(
-                    statusError,
-                    color = DetailRed,
-                    fontSize = 12.sp
-                )
+                Text(statusError, color = DetailRed, fontSize = 12.sp)
             }
 
             Button(
-                onClick = {
-                    onUpdateStatus(selectedStatus)
-                },
+                onClick = { onUpdateStatus(selectedStatus) },
                 enabled = !statusSaving &&
                         !conditionSaving &&
                         selectedStatus != asset.status,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(46.dp),
+                shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = DetailAccent
+                    containerColor = DetailAccent,
+                    disabledContainerColor = Color(0xFF2B334D)
                 )
             ) {
                 if (statusSaving) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(18.dp),
-                        color = DetailWhite
+                        color = DetailWhite,
+                        strokeWidth = 2.dp
                     )
                 } else {
                     Text("Save Status")
@@ -293,18 +296,17 @@ fun AssetDetailsScreen(
             }
         }
 
-        // CONDITION MANAGEMENT
-
-        DetailCardSection("Physical Condition") {
-
+        // PHYSICAL CONDITION
+        DetailCardSection(
+            title = "Physical Condition",
+            subtitle = "Record the asset's current condition."
+        ) {
             ExposedDropdownMenuBox(
                 expanded = conditionMenu,
-                onExpandedChange = {
-                    conditionMenu = it
-                }
+                onExpandedChange = { conditionMenu = it }
             ) {
                 OutlinedTextField(
-                    value = selectedCondition,
+                    value = selectedCondition.replaceFirstChar { it.uppercase() },
                     onValueChange = {},
                     readOnly = true,
                     label = { Text("Asset condition") },
@@ -316,21 +318,18 @@ fun AssetDetailsScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .menuAnchor(),
+                    shape = RoundedCornerShape(14.dp),
                     colors = detailFieldColors()
                 )
 
                 ExposedDropdownMenu(
                     expanded = conditionMenu,
-                    onDismissRequest = {
-                        conditionMenu = false
-                    }
+                    onDismissRequest = { conditionMenu = false }
                 ) {
                     conditions.forEach { condition ->
                         DropdownMenuItem(
                             text = {
-                                Text(condition.replaceFirstChar {
-                                    it.uppercase()
-                                })
+                                Text(condition.replaceFirstChar { it.uppercase() })
                             },
                             onClick = {
                                 selectedCondition = condition
@@ -342,29 +341,28 @@ fun AssetDetailsScreen(
             }
 
             if (conditionError != null) {
-                Text(
-                    conditionError,
-                    color = DetailRed,
-                    fontSize = 12.sp
-                )
+                Text(conditionError, color = DetailRed, fontSize = 12.sp)
             }
 
             Button(
-                onClick = {
-                    onUpdateCondition(selectedCondition)
-                },
+                onClick = { onUpdateCondition(selectedCondition) },
                 enabled = !conditionSaving &&
                         !statusSaving &&
                         selectedCondition != asset.condition,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(46.dp),
+                shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = DetailGreen
+                    containerColor = DetailAccent,
+                    disabledContainerColor = Color(0xFF2B334D)
                 )
             ) {
                 if (conditionSaving) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(18.dp),
-                        color = DetailWhite
+                        color = DetailWhite,
+                        strokeWidth = 2.dp
                     )
                 } else {
                     Text("Save Condition")
@@ -373,7 +371,6 @@ fun AssetDetailsScreen(
         }
 
         // EQUIPMENT INFORMATION
-
         DetailCardSection("Equipment Information") {
             DetailValue("Category", asset.category)
             DetailValue("Manufacturer", asset.manufacturer)
@@ -381,12 +378,14 @@ fun AssetDetailsScreen(
             DetailValue("Serial Number", asset.serialNumber)
         }
 
-        DetailCardSection("Location Information") {
+        // LOCATION INFORMATION
+        DetailCardSection(
+            title = "Location Information",
+            subtitle = "Assign this asset to a room in the workspace."
+        ) {
             DetailValue("Workspace ID", asset.workspaceId)
 
-            val selectedRoom = rooms.firstOrNull {
-                it.id == selectedRoomId
-            }
+            val selectedRoom = rooms.firstOrNull { it.id == selectedRoomId }
 
             ExposedDropdownMenuBox(
                 expanded = roomMenu,
@@ -398,13 +397,12 @@ fun AssetDetailsScreen(
                     readOnly = true,
                     label = { Text("Room") },
                     trailingIcon = {
-                        ExposedDropdownMenuDefaults.TrailingIcon(
-                            expanded = roomMenu
-                        )
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = roomMenu)
                     },
                     modifier = Modifier
                         .fillMaxWidth()
                         .menuAnchor(),
+                    shape = RoundedCornerShape(14.dp),
                     colors = detailFieldColors()
                 )
 
@@ -433,25 +431,26 @@ fun AssetDetailsScreen(
             }
 
             if (locationError != null) {
-                Text(
-                    locationError,
-                    color = DetailRed,
-                    fontSize = 12.sp
-                )
+                Text(locationError, color = DetailRed, fontSize = 12.sp)
             }
 
             Button(
                 onClick = { onUpdateLocation(selectedRoomId) },
                 enabled = !locationSaving && selectedRoomId != asset.roomId,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(46.dp),
+                shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = DetailAccent
+                    containerColor = DetailAccent,
+                    disabledContainerColor = Color(0xFF2B334D)
                 )
             ) {
                 if (locationSaving) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(18.dp),
-                        color = DetailWhite
+                        color = DetailWhite,
+                        strokeWidth = 2.dp
                     )
                 } else {
                     Text("Save Location")
@@ -471,8 +470,8 @@ fun AssetDetailsScreen(
             onClick = onViewHistory,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(52.dp),
-            shape = RoundedCornerShape(12.dp),
+                .height(50.dp),
+            shape = RoundedCornerShape(14.dp),
             colors = ButtonDefaults.outlinedButtonColors(
                 contentColor = DetailAccent
             )
@@ -484,8 +483,8 @@ fun AssetDetailsScreen(
             onClick = onEdit,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(52.dp),
-            shape = RoundedCornerShape(12.dp),
+                .height(50.dp),
+            shape = RoundedCornerShape(14.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = DetailAccent
             )
@@ -493,34 +492,63 @@ fun AssetDetailsScreen(
             Text("Edit Asset Information")
         }
 
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(16.dp))
     }
 }
 
 @Composable
 private fun DetailCardSection(
     title: String,
+    subtitle: String? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
     Card(
-        colors = CardDefaults.cardColors(
-            containerColor = DetailCard
-        ),
-        shape = RoundedCornerShape(16.dp)
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = DetailCard),
+        shape = RoundedCornerShape(20.dp)
     ) {
         Column(
-            Modifier.padding(18.dp),
+            modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            Text(
-                title,
-                color = DetailAccent,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    title,
+                    color = DetailAccent,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                if (subtitle != null) {
+                    Text(
+                        subtitle,
+                        color = DetailMuted,
+                        fontSize = 11.sp
+                    )
+                }
+            }
 
             content()
         }
+    }
+}
+
+@Composable
+private fun DetailTag(
+    text: String,
+    color: Color
+) {
+    Surface(
+        color = color.copy(alpha = 0.13f),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+            color = color,
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Bold
+        )
     }
 }
 
@@ -529,7 +557,7 @@ private fun DetailValue(
     label: String,
     value: String?
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
         Text(
             label,
             color = DetailMuted,
@@ -539,7 +567,8 @@ private fun DetailValue(
         Text(
             value?.takeIf { it.isNotBlank() } ?: "Not specified",
             color = DetailWhite,
-            fontSize = 14.sp
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Medium
         )
     }
 }
@@ -550,10 +579,10 @@ private fun detailFieldColors() =
         focusedTextColor = DetailWhite,
         unfocusedTextColor = DetailWhite,
         focusedBorderColor = DetailAccent,
-        unfocusedBorderColor = Color(0xFF334155),
+        unfocusedBorderColor = Color(0xFF3A456B),
         focusedLabelColor = DetailAccent,
         unfocusedLabelColor = DetailMuted,
         cursorColor = DetailAccent,
-        focusedContainerColor = DetailCard,
-        unfocusedContainerColor = DetailCard
+        focusedContainerColor = DetailCardInner,
+        unfocusedContainerColor = DetailCardInner
     )
