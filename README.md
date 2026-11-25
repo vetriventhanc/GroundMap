@@ -61,8 +61,11 @@ GroundMap is being developed with a focus on a clear mobile experience and pract
 | Mobile platform | Android |
 | Programming language | Kotlin |
 | UI framework | Jetpack Compose |
-| Backend | **[Add backend technology]** |
-| Database | **[Add database technology]** |
+| Backend | FastAPI (Python) |
+| Database | PostgreSQL |
+| ORM / Database driver | SQLAlchemy / psycopg |
+| Database migrations | Alembic |
+| API server | Uvicorn |
 | IDE | Android Studio |
 
 ## 🗂️ Project Structure
