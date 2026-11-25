@@ -18,10 +18,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.groundmap.android.data.remote.WorkspaceData
 
-private val WorkspaceBackground = Color(0xFF0B1120)
-private val WorkspaceCard = Color(0xFF151F32)
-private val WorkspaceAccent = Color(0xFF3B82F6)
-private val WorkspaceMuted = Color(0xFF94A3B8)
+private val WorkspaceBackground = Color(0xFF0B1024)
+private val WorkspaceCard = Color(0xFF171D38)
+private val WorkspaceAccent = Color(0xFF8B5CF6)
+private val WorkspaceMuted = Color(0xFFA8B2D1)
 private val WorkspaceWhite = Color(0xFFF8FAFC)
 
 @Composable
@@ -142,7 +142,7 @@ fun WorkspaceSelectorScreen(
                                     modifier = Modifier
                                         .size(46.dp)
                                         .background(
-                                            Color(0xFF253653),
+                                            Color(0xFF29234F),
                                             RoundedCornerShape(12.dp)
                                         ),
                                     contentAlignment = Alignment.Center
