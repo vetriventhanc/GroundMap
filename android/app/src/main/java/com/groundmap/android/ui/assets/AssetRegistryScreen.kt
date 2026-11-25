@@ -31,6 +31,15 @@ private val AssetStatuses = listOf(
     "retired"
 )
 
+private val AssetConditions = listOf(
+    "All",
+    "excellent",
+    "good",
+    "fair",
+    "poor",
+    "damaged"
+)
+
 @Composable
 fun AssetRegistryScreen(
     assets: List<AssetData>,
@@ -42,14 +51,15 @@ fun AssetRegistryScreen(
 ) {
     var searchQuery by remember { mutableStateOf("") }
     var selectedStatus by remember { mutableStateOf("All") }
+    var selectedCondition by remember { mutableStateOf("All") }
 
     val filteredAssets = remember(
         assets,
         searchQuery,
-        selectedStatus
+        selectedStatus,
+        selectedCondition
     ) {
         assets.filter { asset ->
-
             val matchesSearch =
                 searchQuery.isBlank() ||
                         asset.name.contains(searchQuery, ignoreCase = true) ||
@@ -63,7 +73,11 @@ fun AssetRegistryScreen(
                 selectedStatus == "All" ||
                         asset.status.equals(selectedStatus, ignoreCase = true)
 
-            matchesSearch && matchesStatus
+            val matchesCondition =
+                selectedCondition == "All" ||
+                        asset.condition.equals(selectedCondition, ignoreCase = true)
+
+            matchesSearch && matchesStatus && matchesCondition
         }
     }
 
@@ -99,6 +113,46 @@ fun AssetRegistryScreen(
 
             TextButton(onClick = onRefresh) {
                 Text("Refresh ↻", color = AssetAccent)
+            }
+        }
+
+        Spacer(Modifier.height(14.dp))
+
+        Text(
+            "FILTER BY CONDITION",
+            color = AssetMuted,
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 1.5.sp
+        )
+
+        Spacer(Modifier.height(8.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            AssetConditions.forEach { condition ->
+                val selected = selectedCondition == condition
+
+                FilterChip(
+                    selected = selected,
+                    onClick = { selectedCondition = condition },
+                    label = {
+                        Text(
+                            if (condition == "All") "All"
+                            else condition.replaceFirstChar { it.uppercase() },
+                            fontSize = 10.sp,
+                            maxLines = 1
+                        )
+                    },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = AssetAccent,
+                        selectedLabelColor = Color.White,
+                        containerColor = AssetCard,
+                        labelColor = AssetMuted
+                    )
+                )
             }
         }
 
