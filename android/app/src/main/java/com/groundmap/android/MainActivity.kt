@@ -7,6 +7,8 @@ import com.groundmap.android.ui.assets.FaultReportUiData
 import com.groundmap.android.ui.assets.AssetDetailsScreen
 import com.groundmap.android.ui.assets.AssetEditScreen
 import com.groundmap.android.ui.assets.AssetEditFormData
+import com.groundmap.android.ui.activity.ActivityFeedItem
+import com.groundmap.android.ui.activity.ActivityScreen
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -91,6 +93,13 @@ fun GroundMapApp() {
 
     var workspaceRefresh by remember { mutableIntStateOf(0) }
     var assetRefresh by remember { mutableIntStateOf(0) }
+
+    var activityItems by remember {
+        mutableStateOf<List<ActivityFeedItem>>(emptyList())
+    }
+    var activityLoading by remember { mutableStateOf(false) }
+    var activityError by remember { mutableStateOf<String?>(null) }
+    var activityRefresh by remember { mutableIntStateOf(0) }
 
     var statusSaving by remember { mutableStateOf(false) }
     var conditionSaving by remember { mutableStateOf(false) }
@@ -233,6 +242,69 @@ fun GroundMapApp() {
                         if (!cancelled.get()) {
                             assetError = e.message
                             assetLoading = false
+                        }
+                    }
+                }
+            }.start()
+        }
+
+        onDispose {
+            cancelled.set(true)
+        }
+    }
+
+    // Load activity history for all assets in the selected workspace
+    DisposableEffect(
+        selectedTab,
+        selectedWorkspace?.id,
+        assetRefresh,
+        activityRefresh,
+        assetLoading,
+        assets
+    ) {
+        val cancelled = AtomicBoolean(false)
+        val workspaceId = selectedWorkspace?.id
+
+        if (selectedTab == 3 && workspaceId != null && !assetLoading) {
+            activityLoading = true
+            activityError = null
+
+            val assetsSnapshot = assets.toList()
+
+            Thread {
+                try {
+                    val result = mutableListOf<ActivityFeedItem>()
+
+                    assetsSnapshot.forEach { asset ->
+                        val history = GroundMapApi.loadAssetHistory(asset.id)
+
+                        history.forEach { event ->
+                            result.add(
+                                ActivityFeedItem(
+                                    assetName = asset.name,
+                                    assetCode = asset.assetCode,
+                                    event = event
+                                )
+                            )
+                        }
+                    }
+
+                    val sortedResult = result.sortedByDescending {
+                        it.event.createdAt
+                    }
+
+                    Handler(Looper.getMainLooper()).post {
+                        if (!cancelled.get()) {
+                            activityItems = sortedResult
+                            activityLoading = false
+                            activityError = null
+                        }
+                    }
+                } catch (e: Exception) {
+                    Handler(Looper.getMainLooper()).post {
+                        if (!cancelled.get()) {
+                            activityError = e.message ?: "Unable to load activity."
+                            activityLoading = false
                         }
                     }
                 }
@@ -677,12 +749,15 @@ fun GroundMapApp() {
                     modifier = Modifier.padding(padding)
                 )
 
-                // ACTIVITY PLACEHOLDER
-                3 -> SimpleScreen(
-                    "Activity",
-                    "Asset event history will appear here.",
-                    "◷",
-                    Modifier.padding(padding)
+                // ACTIVITY
+                3 -> ActivityScreen(
+                    items = activityItems,
+                    loading = activityLoading || (selectedTab == 3 && assetLoading),
+                    error = activityError,
+                    onRefresh = {
+                        activityRefresh++
+                    },
+                    modifier = Modifier.padding(padding)
                 )
 
                 // WORKSPACE SELECTOR
