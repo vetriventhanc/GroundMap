@@ -1,4 +1,3 @@
-
 package com.groundmap.android.ui.scanner
 
 import android.Manifest
@@ -9,28 +8,16 @@ import android.os.Looper
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,11 +34,12 @@ import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
 import java.util.UUID
 
-private val ScannerBackground = Color(0xFF0B1120)
-private val ScannerCard = Color(0xFF151F32)
-private val ScannerAccent = Color(0xFF3B82F6)
-private val ScannerMuted = Color(0xFF94A3B8)
+private val ScannerBackground = Color(0xFF0B1020)
+private val ScannerCard = Color(0xFF171D3A)
+private val ScannerAccent = Color(0xFF8B5CF6)
+private val ScannerMuted = Color(0xFFA5AEC8)
 private val ScannerWhite = Color(0xFFF8FAFC)
+private val ScannerBorder = Color(0xFF303858)
 private val ScannerRed = Color(0xFFEF4444)
 
 @Composable
@@ -98,7 +86,6 @@ fun QrScannerScreen(
         rememberLauncherForActivityResult(
             contract = ActivityResultContracts.GetContent()
         ) { uri: Uri? ->
-
             if (uri != null) {
                 imageScanError = null
                 cameraError = null
@@ -115,7 +102,6 @@ fun QrScannerScreen(
 
                     scanner.process(image)
                         .addOnSuccessListener { barcodes ->
-
                             val payload = barcodes
                                 .firstOrNull { it.rawValue != null }
                                 ?.rawValue
@@ -143,7 +129,6 @@ fun QrScannerScreen(
                         .addOnCompleteListener {
                             scanner.close()
                         }
-
                 } catch (exception: Exception) {
                     imageScanError =
                         exception.message ?: "Unable to open the selected image."
@@ -167,123 +152,151 @@ fun QrScannerScreen(
         modifier = modifier
             .fillMaxSize()
             .background(ScannerBackground)
-            .padding(20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+            .padding(horizontal = 18.dp)
+            .padding(top = 14.dp, bottom = 100.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        Text(
-            text = "QR Scanner",
-            color = ScannerWhite,
-            fontSize = 25.sp,
-            fontWeight = FontWeight.Bold
-        )
+        Column(
+            verticalArrangement = Arrangement.spacedBy(5.dp)
+        ) {
+            Text(
+                text = "G R O U N D M A P",
+                color = ScannerAccent,
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Bold
+            )
 
-        Text(
-            text = "Scan a GroundMap asset QR code",
-            color = ScannerMuted,
-            fontSize = 14.sp
-        )
+            Text(
+                text = "QR Scanner",
+                color = ScannerWhite,
+                fontSize = 25.sp,
+                fontWeight = FontWeight.Bold
+            )
 
-        Box(
+            Text(
+                text = "Scan a QR code to open its asset details.",
+                color = ScannerMuted,
+                fontSize = 13.sp
+            )
+        }
+
+        Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f)
-                .background(
-                    ScannerCard,
-                    RoundedCornerShape(20.dp)
-                ),
-            contentAlignment = Alignment.Center
+                .weight(1f),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = ScannerCard
+            ),
+            border = androidx.compose.foundation.BorderStroke(
+                width = 1.dp,
+                color = ScannerBorder
+            )
         ) {
-            when {
-                viewModel.isLoading -> {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        CircularProgressIndicator(
-                            color = ScannerAccent
-                        )
-
-                        Text(
-                            "Loading asset details...",
-                            color = ScannerWhite
-                        )
-                    }
-                }
-
-                !cameraPermissionGranted -> {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                        modifier = Modifier.padding(20.dp)
-                    ) {
-                        Text(
-                            "Camera permission is required for live scanning.",
-                            color = ScannerWhite
-                        )
-
-                        Button(
-                            onClick = {
-                                permissionLauncher.launch(
-                                    Manifest.permission.CAMERA
-                                )
-                            }
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(10.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                when {
+                    viewModel.isLoading -> {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Text("Grant Camera Permission")
+                            CircularProgressIndicator(
+                                color = ScannerAccent
+                            )
+
+                            Text(
+                                text = "Loading asset details...",
+                                color = ScannerWhite,
+                                fontSize = 14.sp
+                            )
                         }
                     }
-                }
 
-                else -> {
-                    key(cameraSessionKey) {
-                        CameraPreview(
-                            onQrCodeDetected = { assetId ->
-                                mainHandler.post {
-                                    cameraError = null
-                                    imageScanError = null
+                    !cameraPermissionGranted -> {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(14.dp),
+                            modifier = Modifier.padding(20.dp)
+                        ) {
+                            Text(
+                                text = "Camera access is needed for live scanning.",
+                                color = ScannerWhite,
+                                fontSize = 14.sp
+                            )
 
-                                    viewModel.findAsset(
-                                        assetId = assetId,
-                                        onAssetFound = { asset ->
-                                            onAssetFound(asset)
-                                        }
+                            Button(
+                                onClick = {
+                                    permissionLauncher.launch(
+                                        Manifest.permission.CAMERA
                                     )
-                                }
-                            },
-                            onScanError = { message ->
-                                mainHandler.post {
-                                    cameraError = message
-                                }
-                            },
-                            modifier = Modifier.fillMaxSize()
-                        )
+                                },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = ScannerAccent
+                                ),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Text("Grant Camera Permission")
+                            }
+                        }
+                    }
+
+                    else -> {
+                        key(cameraSessionKey) {
+                            CameraPreview(
+                                onQrCodeDetected = { assetId ->
+                                    mainHandler.post {
+                                        cameraError = null
+                                        imageScanError = null
+
+                                        viewModel.findAsset(
+                                            assetId = assetId,
+                                            onAssetFound = { asset ->
+                                                onAssetFound(asset)
+                                            }
+                                        )
+                                    }
+                                },
+                                onScanError = { message ->
+                                    mainHandler.post {
+                                        cameraError = message
+                                    }
+                                },
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
                     }
                 }
             }
         }
 
+        Text(
+            text = "LIVE SCAN",
+            color = ScannerAccent,
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Bold
+        )
+
+        Text(
+            text = "Position the asset QR code inside the camera view.",
+            color = ScannerMuted,
+            fontSize = 12.sp
+        )
+
         viewModel.errorMessage?.let { message ->
-            Text(
-                text = message,
-                color = ScannerRed,
-                fontSize = 13.sp
-            )
+            ScannerMessage(message)
         }
 
         cameraError?.let { message ->
-            Text(
-                text = message,
-                color = ScannerRed,
-                fontSize = 13.sp
-            )
+            ScannerMessage(message)
         }
 
         imageScanError?.let { message ->
-            Text(
-                text = message,
-                color = ScannerRed,
-                fontSize = 13.sp
-            )
+            ScannerMessage(message)
         }
 
         Button(
@@ -291,44 +304,60 @@ fun QrScannerScreen(
                 imageScanError = null
                 imagePickerLauncher.launch("image/*")
             },
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
             enabled = !viewModel.isLoading,
             colors = ButtonDefaults.buttonColors(
-                containerColor = ScannerAccent
-            )
+                containerColor = ScannerAccent,
+                disabledContainerColor = ScannerAccent.copy(alpha = 0.4f)
+            ),
+            shape = RoundedCornerShape(14.dp)
         ) {
-            Text("Scan from Image")
+            Text(
+                text = "Scan from Image",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold
+            )
         }
-
-        Text(
-            text = "Or position the QR code inside the live camera view.",
-            color = ScannerMuted,
-            fontSize = 12.sp
-        )
 
         if (
             viewModel.errorMessage != null ||
             cameraError != null ||
             imageScanError != null
         ) {
-            Button(
+            OutlinedButton(
                 onClick = {
                     viewModel.reset()
                     cameraError = null
                     imageScanError = null
                     cameraSessionKey++
                 },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = ScannerAccent
-                )
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = ScannerAccent
+                ),
+                border = androidx.compose.foundation.BorderStroke(
+                    width = 1.dp,
+                    color = ScannerBorder
+                ),
+                shape = RoundedCornerShape(14.dp)
             ) {
                 Text("Scan Again")
             }
         }
-
-        Spacer(Modifier.height(4.dp))
     }
+}
+
+@Composable
+private fun ScannerMessage(message: String) {
+    Text(
+        text = message,
+        color = ScannerRed,
+        fontSize = 12.sp
+    )
 }
 
 private fun extractGroundMapAssetId(payload: String): String? {
