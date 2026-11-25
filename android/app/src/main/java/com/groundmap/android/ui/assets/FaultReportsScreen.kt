@@ -10,13 +10,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-private val FaultBackground = Color(0xFF0B1120)
-private val FaultCard = Color(0xFF151F32)
-private val FaultAccent = Color(0xFF3B82F6)
+private val FaultBackground = Color(0xFF0B1023)
+private val FaultCard = Color(0xFF171F3B)
+private val FaultAccent = Color(0xFF9B5CFF)
 private val FaultWhite = Color(0xFFF8FAFC)
 private val FaultMuted = Color(0xFF94A3B8)
 private val FaultRed = Color(0xFFEF4444)
@@ -71,13 +72,16 @@ fun FaultReportsScreen(
                 contentColor = FaultAccent
             )
         ) {
-            Text("← Back to Asset Operations")
+            Text(
+                "← Back to Asset Operations",
+                fontSize = 12.sp
+            )
         }
 
         Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
             Text(
                 "FAULT REPORTING",
-                color = FaultRed,
+                color = FaultAccent,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -85,7 +89,7 @@ fun FaultReportsScreen(
             Text(
                 assetName,
                 color = FaultWhite,
-                fontSize = 24.sp,
+                fontSize = 25.sp,
                 fontWeight = FontWeight.Bold
             )
 
@@ -100,8 +104,14 @@ fun FaultReportsScreen(
             OutlinedTextField(
                 value = title,
                 onValueChange = { title = it },
-                label = { Text("Fault title") },
-                placeholder = { Text("e.g. Cooling system malfunction") },
+                label = { Text("Fault title", fontSize = 12.sp) },
+                placeholder = {
+                    Text(
+                        "e.g. Cooling system malfunction",
+                        fontSize = 12.sp
+                    )
+                },
+                textStyle = TextStyle(fontSize = 12.sp),
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 colors = faultFieldColors()
@@ -110,10 +120,14 @@ fun FaultReportsScreen(
             OutlinedTextField(
                 value = description,
                 onValueChange = { description = it },
-                label = { Text("Description") },
+                label = { Text("Description", fontSize = 12.sp) },
                 placeholder = {
-                    Text("Describe the problem and what happened...")
+                    Text(
+                        "Describe the problem and what happened...",
+                        fontSize = 12.sp
+                    )
                 },
+                textStyle = TextStyle(fontSize = 12.sp),
                 minLines = 4,
                 modifier = Modifier.fillMaxWidth(),
                 colors = faultFieldColors()
@@ -127,7 +141,8 @@ fun FaultReportsScreen(
                     value = severity.replaceFirstChar { it.uppercase() },
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text("Severity") },
+                    label = { Text("Severity", fontSize = 12.sp) },
+                    textStyle = TextStyle(fontSize = 12.sp),
                     trailingIcon = {
                         ExposedDropdownMenuDefaults.TrailingIcon(
                             expanded = severityMenu
@@ -146,7 +161,10 @@ fun FaultReportsScreen(
                     severities.forEach { option ->
                         DropdownMenuItem(
                             text = {
-                                Text(option.replaceFirstChar { it.uppercase() })
+                                Text(
+                                    option.replaceFirstChar { it.uppercase() },
+                                    fontSize = 12.sp
+                                )
                             },
                             onClick = {
                                 severity = option
@@ -170,7 +188,7 @@ fun FaultReportsScreen(
                         description.trim().length >= 5,
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = FaultRed
+                    containerColor = FaultAccent
                 )
             ) {
                 if (saving) {
@@ -180,9 +198,9 @@ fun FaultReportsScreen(
                         strokeWidth = 2.dp
                     )
                     Spacer(Modifier.width(10.dp))
-                    Text("Submitting...")
+                    Text("Submitting...", fontSize = 12.sp)
                 } else {
-                    Text("Submit Fault Report")
+                    Text("Submit Fault Report", fontSize = 12.sp)
                 }
             }
 
@@ -220,7 +238,11 @@ fun FaultReportsScreen(
                 onClick = onRefresh,
                 enabled = !loading
             ) {
-                Text("Refresh", color = FaultAccent)
+                Text(
+                    "Refresh",
+                    color = FaultAccent,
+                    fontSize = 12.sp
+                )
             }
         }
 
@@ -247,7 +269,7 @@ fun FaultReportsScreen(
                         "No fault reports recorded for this asset.",
                         color = FaultMuted,
                         modifier = Modifier.padding(18.dp),
-                        fontSize = 13.sp
+                        fontSize = 12.sp
                     )
                 }
             }
@@ -340,7 +362,7 @@ private fun FaultReportCard(
             Text(
                 report.description,
                 color = FaultMuted,
-                fontSize = 13.sp
+                fontSize = 12.sp
             )
 
             Row(
@@ -382,7 +404,8 @@ private fun FaultReportCard(
                         .replaceFirstChar { it.uppercase() },
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text("Status") },
+                    label = { Text("Status", fontSize = 12.sp) },
+                    textStyle = TextStyle(fontSize = 12.sp),
                     trailingIcon = {
                         ExposedDropdownMenuDefaults.TrailingIcon(
                             expanded = statusMenuExpanded
@@ -403,7 +426,8 @@ private fun FaultReportCard(
                             text = {
                                 Text(
                                     status.replace("_", " ")
-                                        .replaceFirstChar { it.uppercase() }
+                                        .replaceFirstChar { it.uppercase() },
+                                    fontSize = 12.sp
                                 )
                             },
                             onClick = {
@@ -418,10 +442,14 @@ private fun FaultReportCard(
             OutlinedTextField(
                 value = resolutionNotes,
                 onValueChange = { resolutionNotes = it },
-                label = { Text("Resolution notes") },
+                label = { Text("Resolution notes", fontSize = 12.sp) },
                 placeholder = {
-                    Text("Describe the work completed or next steps...")
+                    Text(
+                        "Describe the work completed or next steps...",
+                        fontSize = 12.sp
+                    )
                 },
+                textStyle = TextStyle(fontSize = 12.sp),
                 minLines = 3,
                 modifier = Modifier.fillMaxWidth(),
                 colors = faultFieldColors()
@@ -448,9 +476,9 @@ private fun FaultReportCard(
                         strokeWidth = 2.dp
                     )
                     Spacer(Modifier.width(10.dp))
-                    Text("Saving...")
+                    Text("Saving...", fontSize = 12.sp)
                 } else {
-                    Text("Save Update")
+                    Text("Save Update", fontSize = 12.sp)
                 }
             }
         }
